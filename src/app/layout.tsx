@@ -28,17 +28,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <motion.div
-      initial={{ opacity: 0 }} // 初期状態
-      animate={{ opacity: 1 }} // アニメーション後の状態
-      transition={{ duration: 1 }} // アニメーションの持続時間
-      >
-        <body
+        <motion.body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          initial={{ opacity: 0 }} // 初期状態
+          animate={{ opacity: 1 }} // アニメーション後の状態
+          transition={{ duration: 1 }} // アニメーションの持続時間
         >
           {children}
-        </body>
-      </motion.div>
+        </motion.body>
     </html>
   );
 }
