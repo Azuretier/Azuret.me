@@ -9,7 +9,7 @@ export default function Home() {
           rel="noopener noreferrer"
         >
 
-          me
+          me (fixed)
         </a>
       </main>
     </div>
