@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { motion } from 'framer-motion';
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -25,11 +26,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      <motion.div
+      initial={{ opacity: 0 }} // 初期状態
+      animate={{ opacity: 1 }} // アニメーション後の状態
+      transition={{ duration: 1 }} // アニメーションの持続時間
       >
-        {children}
-      </body>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          {children}
+        </body>
+      </motion.div>
     </html>
   );
 }
