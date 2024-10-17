@@ -19,7 +19,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: "azuret.net",
     description: "A website created by Azuret.",
-    siteName: "azuret.net",
     locale: 'ja-JP',
     type: 'website',
   },
