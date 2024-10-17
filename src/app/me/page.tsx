@@ -3,15 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
-    FaBirthdayCake,
-    FaDiscord,
-    FaGithub,
-    FaLocationArrow,
-    FaSteam,
-    FaTwitter,
-    FaUserGraduate,
-    FaXbox,
-    FaYoutube,
+    FaBirthdayCake
   } from "react-icons/fa";
 
 export default function Home() {
