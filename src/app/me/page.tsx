@@ -1,7 +1,18 @@
 'use client'
 
 import Image from "next/image";
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import {
+    FaBirthdayCake,
+    FaDiscord,
+    FaGithub,
+    FaLocationArrow,
+    FaSteam,
+    FaTwitter,
+    FaUserGraduate,
+    FaXbox,
+    FaYoutube,
+  } from "react-icons/fa";
 
 export default function Home() {
   return (
@@ -18,6 +29,7 @@ export default function Home() {
                 <div>
                     <div className="text-xl font-medium text-black">Azure</div>
                     <p className="text-slate-500">You have a new message!</p>
+                    <FaBirthdayCake /><p className="text-slate-500">Birthday</p>
                 </div>
         </motion.div>
     </div>
