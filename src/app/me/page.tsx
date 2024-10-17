@@ -17,11 +17,10 @@ export default function Home() {
             <motion.div
                 layout
                 key={Math.random()}
-                initial={{ opacity: 0, y: 100 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={isLoaded ? { opacity: 1, y: 0 } : {} }
-                exit={{ opacity: 0 }}
                 transition={{
-                duration: 1
+                    type: 'spring'
                 }}
                 className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
             >
