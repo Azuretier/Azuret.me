@@ -9,7 +9,7 @@ export default function gatiiku() {
         <main>
             <FadeUpStagger>
                 <FadeUpDiv>
-                    <Center>Hello how are yo' doing bro</Center>
+                    <Center>Hello how are yo&apos; doing bro</Center>
                     <B/>
                 </FadeUpDiv>
             </FadeUpStagger> 
