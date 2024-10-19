@@ -1,3 +1,5 @@
+'use client'
+
 import Center from "@/components/org/c"
 import B from "@/components/org/button"
 
