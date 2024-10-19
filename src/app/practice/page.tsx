@@ -48,32 +48,6 @@ export default function Home() {
               </div>
             </div>
           </FadeUpDiv>
-          <LinkCard
-            className='col-span-12 grid gap-3 p-6 transition-colors hover:border-youtube md:col-span-6 lg:col-span-4'
-            href='https://youtube.com/nonick_mc'
-          >
-            <CardIcon className='bg-youtube'>
-              <FaYoutube size={25} />
-            </CardIcon>
-            <CardName name='YouTube' id='@nonick_mc' />
-          </LinkCard>
-          <FadeUpCard className='col-span-6 grid gap-3 p-6 transition-colors hover:border-xbox md:col-span-3 lg:col-span-2'>
-            <CardIcon className='bg-xbox'>
-              <FaXbox size={25} />
-            </CardIcon>
-            <CardName name='Xbox' id='NULL1017' />
-          </FadeUpCard>
-          <LinkCard
-            className='col-span-6 grid gap-3 p-6 transition-colors hover:border-steam md:col-span-3 lg:col-span-2'
-            href='https://steamcommunity.com/id/nonick-mc/'
-          >
-            <CardIcon className='bg-steam'>
-              <FaSteam size={25} />
-            </CardIcon>
-            <CardName name='Steam' id='NULL1017' />
-          </LinkCard>
-          
-          
         </div>
       </FadeUpStagger>
     </main>
