@@ -8,17 +8,12 @@ import {animate} from 'framer-motion/dom'
 const Gatiiku = () => {
 
     useEffect(() => {
-        const fadeUpElement = document.getElementById("fadeUpElement")
-        
-        // ページが読み込まれた時に isLoaded を true に設定
-        if (fadeUpElement !== null) {
-            animate(fadeUpElement, { y: [10, 0], opacity: [0, 1] }, { type: "spring" })
-        }
+        animate("div", { y: [10, 0], opacity: [0, 1] }, { type: "spring" })
     }, []); // 空の依存配列で初回レンダリング時にのみ実行
 
     return (
         <main className="flex items-center justify-center h-screen">    
-            <div id="fadeUpElement">gatiiku</div>
+            <div className="bg-white p-4 rounded-xl text-xl text-black">gatiiku</div>
         </main>
     )
 }
