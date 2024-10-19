@@ -18,7 +18,7 @@ const Gatiiku = () => {
         <main className="flex items-center justify-center h-screen">    
             <motion.div 
                 className="bg-white p-4 rounded-xl text-xl text-black"
-                initial={{y:10, opacity: 0}}
+                initial={{y:10}}
                 animate={{y: 0}}
                 transition={{type: 'spring'}}
                 id="fadeUp"
