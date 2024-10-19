@@ -3,17 +3,26 @@
 //import Center from "@/components/org/c"
 //import {FadeUpDiv, FadeUpStagger} from "@/components/animation"
 import {useEffect} from 'react'
+import {motion} from 'framer-motion'
 import {animate} from 'framer-motion/dom'
 
 const Gatiiku = () => {
-
+    const fadeUp = document.getElementById("fadeUp")
     useEffect(() => {
-        animate("div", { y: [10, 0], opacity: [0, 1]}, { y: {type: "spring"}, opacity: {duration: 1} })
+        if (fadeUp != null) {
+            animate(fadeUp, {opacity: [0, 1]})
+        }
     }, []); // 空の依存配列で初回レンダリング時にのみ実行
 
     return (
         <main className="flex items-center justify-center h-screen">    
-            <div className="bg-white p-4 rounded-xl text-xl text-black">gatiiku</div>
+            <motion.div 
+                className="bg-white p-4 rounded-xl text-xl text-black"
+                initial={{y: 10}}
+                animate={{y: 0}}
+                transition={{type: 'spring'}}
+                id="fadeUp"
+            >gatiiku</motion.div>
         </main>
     )
 }
