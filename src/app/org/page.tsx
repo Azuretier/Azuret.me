@@ -6,7 +6,7 @@ import {motion} from "framer-motion"
 
 import React, { useState, useEffect } from 'react';
 
-const home = () => {
+const Gatiiku = () => {
     const [isLoaded, setIsLoaded] = useState<boolean>(false); // 初期状態は false
 
     useEffect(() => {
@@ -34,4 +34,4 @@ const home = () => {
     )
 }
 
-export default home
+export default Gatiiku
