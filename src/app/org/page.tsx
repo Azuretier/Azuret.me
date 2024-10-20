@@ -6,7 +6,7 @@ import {useEffect} from 'react'
 import {motion} from 'framer-motion'
 import {animate} from 'framer-motion/dom'
 
-const Gatiiku = () => {
+const Main = () => {
     useEffect(() => {
         const fadeUp = document.getElementById("fadeUp")
         if (fadeUp != null) {
@@ -24,11 +24,11 @@ const Gatiiku = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                gatiiku
+                Make your world
             </motion.div>
             <section className="row-span-2"></section>  
         </main>
     )
 }
 
-export default Gatiiku
+export default Main
