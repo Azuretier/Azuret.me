@@ -18,13 +18,13 @@ const Main = () => {
         <main className="grid grid-cols-12 grid-rows-3 grid-flow-row gap-4 items-center justify-center h-screen">
             <section className="row-span-2"></section>    
             <motion.div 
-                className="p-4 rounded-xl text-xl text-white row-start-3 col-span-3 self-start border border-zinc-200 dark:border-zinc-800"
+                className="grid p-4 rounded-xl text-xl text-white row-start-3 col-span-3 self-start border border-zinc-200 dark:border-zinc-800"
                 initial={{y: 20, opacity: 0}}
                 animate={{y: 0}}
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section className="self-center">あずれーと</section>
+                <section className="justify-self-center">あずれーと</section>
                 <div className="grid gap-1">
                     <p>Happy Birthday 200X/2/18</p>
                 </div>
