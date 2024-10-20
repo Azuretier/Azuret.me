@@ -26,7 +26,9 @@ const Main = () => {
             >
                 <section>あずれーと</section><br/>
                 <div className="grid gap-1">
-                    <p>Happy Birthday 200X/2/18</p>
+                    <div className="flex items-center gap-2">
+                        <p>Happy Birthday 200X/2/18</p>
+                    </div>
                 </div>
             </motion.div>
             <section className="row-span-2"></section>  
