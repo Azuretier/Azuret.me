@@ -34,7 +34,7 @@ const Main = () => {
                     <p className="justify-self-center">Azuret</p>
                 </section>
                 <div className="grid grid-flow-row items-center gap-2 text-subtext">
-                    <div className="grid justify-start">
+                    <div className="grid grid-flow-col justify-start">
                         <FaBirthdayCake/>
                         <p>200X/2/18</p>    
                     </div>
