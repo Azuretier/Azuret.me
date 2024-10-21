@@ -8,6 +8,7 @@ import {animate} from 'framer-motion/dom'
 import {
     FaBirthdayCake
 } from 'react-icons/fa'
+import Image from 'next/image'
 
 const Main = () => {
     useEffect(() => {
@@ -27,7 +28,10 @@ const Main = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section className="text-3xl font-black justify-self-center">あずれーと</section>
+                <section className="text-3xl font-black justify-self-center">
+                    <Image src="/azure.png" alt="avatar" />
+                    <p>Azuret</p>
+                </section>
                 <div className="grid grid-flow-col items-center justify-start gap-2 text-subtext">
                     <FaBirthdayCake/>
                     <p>200X/2/18</p>
