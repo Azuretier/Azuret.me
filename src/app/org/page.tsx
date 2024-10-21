@@ -33,11 +33,15 @@ const Main = () => {
                     <Image src="/azure.png" alt="avatar" />
                     <p className="justify-self-center">Azuret</p>
                 </section>
-                <div className="grid grid-flow-row grid-cols-2 grid-rows-2 items-center justify-start gap-2 text-subtext">
-                    <FaBirthdayCake/>
-                    <p>200X/2/18</p>
-                    <FaAngleDoubleUp/>
-                    <p>Level up enguage</p>
+                <div className="grid grid-flow-row items-center gap-2 text-subtext">
+                    <div className="grid justify-start">
+                        <FaBirthdayCake/>
+                        <p>200X/2/18</p>    
+                    </div>
+                    <div className="grid justify-start">
+                        <FaAngleDoubleUp/>
+                        <p>Level up enguage</p>
+                    </div>
                 </div>
             </motion.div>
             <section className="row-span-2"></section>  
