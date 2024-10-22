@@ -35,7 +35,7 @@ const Main = () => {
                     <p className="text-subtext">あずれーと</p>
                     <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
                 </div>
-                <div className="text-subtext">
+                <div className="grid gap-1 text-subtext">
                     <div className="grid grid-flow-col gap-2 justify-start">
                         <FaBirthdayCake/>
                         <p>200X/2/18</p>  
