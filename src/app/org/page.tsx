@@ -50,7 +50,7 @@ const Main = () => {
                     </div>
                 </div>
             </motion.div>
-            <div>youtube</div>
+            <div className="row-start-2 col-start-4">youtube</div>
         </main>
     )
 }
