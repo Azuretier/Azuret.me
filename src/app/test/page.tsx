@@ -6,7 +6,7 @@ import {animate} from 'framer-motion/dom'
 import {
     FaBirthdayCake,
     FaAngleDoubleUp,
-    FaPaperPlane
+    FaPaperPlane,
 } from 'react-icons/fa'
 import Image from 'next/image'
 
@@ -43,7 +43,7 @@ const Main = () => {
                     </div>
                     <div className="grid grid-flow-col gap-2 justify-start">
                     <FaPaperPlane/>
-                    <p>Life is like a paper airplane, isn't it?</p>
+                    <p>{"Life is like a paper airplane, isn't it?"}</p>
                     </div>
                 </div>
             </motion.div>
