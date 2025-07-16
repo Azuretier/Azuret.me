@@ -20,14 +20,14 @@ const Main = () => {
     return (
         <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen">   
             <motion.div 
-                className="grid gap-4 p-4 rounded-xl text-base font-black text-white row-start-3 col-start-2 row-span-2 col-span-3"
+                className="grid gap-4 p-4 rounded-xl text-base font-black text-white row-start-3 col-start-2 row-span-2 col-span-5"
                 initial={{y: 20, opacity: 0}}
                 animate={{y: 0}}
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
                 <Image src="/azure.png" alt="avatar" width={200} height={200}/>
-                <div className="grid row-start-2">
+                <div className="grid row-start-2 col-span-3">
                     <p className="text-3xl">Azuret</p>
                     <p className="text-subtext">あずれーと</p>
                     <p className="font-normal text-subtext text-lg">I make my world myself</p>
