@@ -87,7 +87,7 @@ const Main = () => {
             </div>
             <div className="grid justify-start gap-2 items-center grid-flow-col">
               <FaPaperPlane />
-              <div className="grid grid-rows-1 justify-start">
+              <div className="grid grid-rows-1 grid-flow-col justify-start">
                 <span id="rotating-text">{displayedText}</span>
                 <span className="blinking">|</span>
               </div>
