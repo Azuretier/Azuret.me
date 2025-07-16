@@ -1,10 +1,12 @@
-import { FadeUpDiv, FadeUpStagger } from '@/components/animation';
-//import { ThemeToggle } from '@/components/theme-toggle';
+import { FadeUpDiv, FadeUpCard, FadeUpStagger } from '@/components/animation';
+import { CardIcon } from '@/components/link-card-icon';
+import { CardName } from '@/components/link-card-name';
 import Image from 'next/image';
 import {
   FaBirthdayCake,
   FaLocationArrow,
   FaUserGraduate,
+  FaXbox,
 } from 'react-icons/fa';
 
 //<div className='flex h-16 items-center justify-end'>
@@ -13,10 +15,7 @@ import {
 export default function Home() {
   return (
     <main className='container space-y-6 py-6 lg:my-10'>
-      <FadeUpStagger> 
-
-
-        
+      <FadeUpStagger>  
         <div className='grid grid-cols-12 grid-rows-3 gap-5 lg:gap-6'>
           <FadeUpDiv className='col-span-12 row-span-3 space-y-5 md:space-y-7 lg:col-span-4 lg:space-y-8'>
             <Image
@@ -45,6 +44,12 @@ export default function Home() {
               </div>
             </div>
           </FadeUpDiv>
+          <FadeUpCard className='col-span-6 grid gap-3 p-6 transition-colors hover:border-xbox md:col-span-3 lg:col-span-2'>
+            <CardIcon className='bg-xbox'>
+              <FaXbox size={25} />
+            </CardIcon>
+            <CardName name='Xbox' id='NULL1017' />
+          </FadeUpCard>
         </div>
       </FadeUpStagger>
     </main>

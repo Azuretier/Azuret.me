@@ -1,6 +1,8 @@
 "use client"
 
+import {useEffect} from 'react'
 import {motion} from 'framer-motion'
+import {animate} from 'framer-motion/dom'
 import {
     FaBirthdayCake,
     FaAngleDoubleUp,
@@ -9,6 +11,12 @@ import {
 import Image from 'next/image'
 
 const Main = () => {
+    useEffect(() => {
+        const fadeUp = document.getElementById("fadeUp");
+        if (fadeUp != null) {
+            animate(fadeUp, {opacity: [0.1, 1]});
+        }
+    }, []);
     return (
         <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen">   
             <motion.div 
@@ -22,7 +30,7 @@ const Main = () => {
                 <div className="grid row-start-2">
                     <p className="text-3xl">Azuret</p>
                     <p className="text-subtext">あずれーと</p>
-                    <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
+                    <p className="font-normal text-subtext text-lg">I make my world myself</p>
                 </div>
                 <div className="grid gap-1 text-subtext">
                     <div className="grid grid-flow-col gap-2 justify-start">
@@ -31,11 +39,11 @@ const Main = () => {
                     </div>
                     <div className="grid grid-flow-col gap-2 justify-start">
                     <FaAngleDoubleUp/>
-                    <p>Get experience to level up</p>
+                    <p>Explore the world to experience things around you</p>
                     </div>
                     <div className="grid grid-flow-col gap-2 justify-start">
                     <FaPaperPlane/>
-                    <p>人生って紙飛行機だよね</p>
+                    <p>Life is like a paper airplane, isn't it?</p>
                     </div>
                 </div>
             </motion.div>
