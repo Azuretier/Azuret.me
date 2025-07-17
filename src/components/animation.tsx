@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const FADE_UP_ANIMATION_VARIANTS = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 50 },
   show: { opacity: 1, y: 0, transition: { type: 'spring' } },
 };
 
