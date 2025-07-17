@@ -95,16 +95,16 @@ const Main = () => {
               </div>
             </div>
           </motion.div>
-          <a href="https://x.com/09xgg" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-6 hover:text-gray-400 transition">
+          <a href="https://x.com/09xgg" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-6 text-gray-400 transition">
             <FaXTwitter size={24} />
           </a>
-          <a href="https://github.com/Azuretier" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-7 hover:text-gray-400 transition">
+          <a href="https://github.com/Azuretier" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-7 text-gray-400 transition">
             <FaGithub size={24} />
           </a>
           <a href="https://discord.gg/XkwSarHyQm" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-8 hover:text-indigo-400 transition">
             <FaDiscord size={24} />
           </a>
-          <a href="https://youtube.com/@Azuret" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-9 hover:text-red-500 transition">
+          <a href="https://youtube.com/@Azuret" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-9 text-red-500 transition">
             <FaYoutube size={24} />
           </a>
       </main>
