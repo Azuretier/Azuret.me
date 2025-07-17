@@ -90,16 +90,16 @@ const Main = () => {
               </div>
             </div>
           </FadeUpDiv>
-        <FadeUpCard href="https://x.com/09xgg" className="hover:text-gray-400 transition">
+        <FadeUpCard href="https://x.com/09xgg" className="grid col-span-6 gap-3 row-start-2 col-start-6 hover:text-gray-400 transition">
           <FaXTwitter size={24} />
         </FadeUpCard>
-        <FadeUpCard href="https://github.com/Azuretier" className="hover:text-gray-400 transition">
+        <FadeUpCard href="https://github.com/Azuretier" className="grid col-span-6 gap-3 row-start-2 col-start-7 hover:text-gray-400 transition">
           <FaGithub size={24} />
         </FadeUpCard>
-        <FadeUpCard href="https://discord.gg/XkwSarHyQm" className="hover:text-indigo-400 transition">
+        <FadeUpCard href="https://discord.gg/XkwSarHyQm" className="grid col-span-6 gap-3 row-start-2 col-start-8 hover:text-indigo-400 transition">
           <FaDiscord size={24} />
         </FadeUpCard>
-        <FadeUpCard href="https://youtube.com/@Azuret" className="hover:text-red-500 transition">
+        <FadeUpCard href="https://youtube.com/@Azuret" className="grid col-span-6 gap-3 row-start-2 col-start-9 hover:text-red-500 transition">
           <FaYoutube size={24} />
         </FadeUpCard>
         </FadeUpStagger>
