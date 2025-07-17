@@ -28,12 +28,16 @@ const Main = () => {
 
   useEffect(() => {
     const elements = document.querySelectorAll('.fade-up');
-
+    
     elements.forEach((el, index) => {
-      // Add delay based on element index
-      setTimeout(() => {
-        animate(el, { opacity: [0.1, 1], y: [50, 0] }, { type: 'spring'});
-      }, index * 150); // delay 150ms between each
+
+      if (el instanceof HTMLElement) {
+        el.style.opacity = "0";
+        // Add delay based on element index
+        setTimeout(() => {
+          animate(el, { opacity: [0.1, 1], y: [50, 0] }, { type: 'spring'});
+        }, index * 150); // delay 150ms between each
+      }
     });
   }, []);
 
