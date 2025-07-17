@@ -63,8 +63,9 @@ const Main = () => {
   return (
     <>
       {/* Main Content */}
+      <main>
       <FadeUpStagger>
-      <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
+      <div className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
           <FadeUpDiv
             className="grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-5"
           >
@@ -104,8 +105,9 @@ const Main = () => {
           <FadeUpCard href="https://youtube.com/@Azuret" className="grid col-span-1 gap-3 row-start-2 col-start-9 hover:text-red-500 transition">
             <FaYoutube size={24} />
           </FadeUpCard>
-      </main>
+      </div>
       </FadeUpStagger>
+      </main>
     </>
   )
 }
