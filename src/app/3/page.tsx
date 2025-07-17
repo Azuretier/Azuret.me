@@ -100,7 +100,7 @@ const Main = () => {
             </div>
           </motion.div>
           <div className="grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-col row-start-3 col-start-6 row-span-2 col-span-3 justify-around">
-            <motion.a href="https://x.com/09xgg" className="fade-up grid gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
+            <motion.a href="https://x.com/09xgg" className="fade-up flex gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
               <FaXTwitter size={24} />
               <span>X</span>
             </motion.a>
