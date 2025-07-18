@@ -99,7 +99,7 @@ const Main = () => {
               </div>
             </div>
           </motion.div>
-          <div className="grid p-4 rounded-xl font-black text-white grid-rows-7 grid-cols-9 grid-flow-row row-start-3 col-start-6 row-span-3 col-span-6 h-full">
+          <div className="grid p-4 rounded-xl grid-rows-7 grid-cols-9 grid-flow-row row-start-3 col-start-6 row-span-3 col-span-6 h-full">
             <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 text-white border shadow transition-colors hover:border-black rounded-lg row-span-3 col-span-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white bg-black">
                 <FaXTwitter size={24} />
@@ -114,7 +114,7 @@ const Main = () => {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white bg-[rgb(88,101,242)]">
                 <FaDiscord size={24} />
               </div>
-              <div className="grid text-black font-normal">
+              <div className="grid">
                 <p>Discord</p>
                 <section className='flex items-center gap-1'>
                   <p className="text-sm text-gray-500">@xykmr_only09</p>
