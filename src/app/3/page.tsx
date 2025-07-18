@@ -147,7 +147,7 @@ const Main = () => {
               </div>
             </motion.a>
           </div>
-          <div className="flex items-center col-span-1 row-span-1 col-start-11 row-start-2">
+          <div className="flex items-center justify-center col-span-1 row-span-1 col-start-11 row-start-2">
             <ThemeToggle />
           </div>
       </main>
