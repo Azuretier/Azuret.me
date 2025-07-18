@@ -122,7 +122,7 @@ const Main = () => {
               </div>
             </motion.a>
             <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 row-start-5 col-start-6 text-red-500 border shadow transition-colors hover:border-red-500 rounded-lg row-span-3 col-span-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-[rgb(255,0,0)] bg-white shadow">
+              <div className="flex h-20 w-20 items-center justify-center rounded-xl text-[rgb(255,0,0)] bg-white shadow">
                 <FaYoutube size={48} />
               </div>
             </motion.a>
