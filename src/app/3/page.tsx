@@ -110,9 +110,12 @@ const Main = () => {
                 <FaGithub size={24} />
               </div>
             </motion.a>
-            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid gap-3 row-start-5 border shadow transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
+            <motion.a className="fade-up grid gap-3 p-6 row-start-5 border shadow transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white bg-[rgb(88,101,242)]">
                 <FaDiscord size={24} />
+                <div className="grid">
+                  <p>Discord</p><section className="flex items-center gap-1"><p className="text-sm text-muted-foreground">@xykmr_only09</p></section>
+                </div>
               </div>
             </motion.a>
             <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 row-start-5 col-start-6 text-red-500 border shadow transition-colors hover:border-red-500 rounded-lg row-span-3 col-span-4">
