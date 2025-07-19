@@ -75,7 +75,9 @@ const Main = () => {
       {/* Main Content */}
       <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
           <motion.div className="fade-up grid grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
-            <Image className="row-span-2 items-center" src="/azure.png" alt="avatar" width={200} height={200} />
+            <div className="flex h-50 w-50 items-center justify-center row-span-2">
+              <Image src="/azure.png" alt="avatar" width={200} height={200} />
+            </div>
             <div className="grid col-span-3 row-start-3">
               <p className="text-3xl font-black">Azure</p>
               <p className="font-black">あずれーと</p>
