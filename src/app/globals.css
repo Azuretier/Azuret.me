@@ -12,13 +12,13 @@
   .dark {
     --background: #000000;
     --foreground: #ffffff;
-    --border: #ff6060;
+    --border: #27272a;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--border);
   }
   body {
     background-color: var(--background);
