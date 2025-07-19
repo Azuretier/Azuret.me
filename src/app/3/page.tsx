@@ -135,9 +135,9 @@ const Main = () => {
                 </section>
               </div>
             </motion.a>
-            <motion.a href="https://youtube.com/@Azuret" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-3 row-start-5 col-start-6 border shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-[rgb(255,0,0)] bg-white drop-shadow-md">
-                <FaYoutube size={48} />
+            <motion.a href="https://youtube.com/@Azuret" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 row-start-5 col-start-6 border shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4">
+              <div className="flex h-15 w-15 items-center justify-center rounded-2xl text-[rgb(255,0,0)] bg-white drop-shadow-md">
+                <FaYoutube size={36} />
               </div>
               <div className="grid">
                 <p>YouTube</p>
