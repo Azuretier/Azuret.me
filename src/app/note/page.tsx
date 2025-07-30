@@ -62,7 +62,7 @@ const Main = () => {
     <>
       {/* Main Content */}
       <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
-          <motion.div className="fade-up grid items-center grid-cols-1 grid-rows-4 row-start-2 col-start-1 row-span-3 col-span-3 h-full">
+          <motion.div className="fade-up grid items-center grid-cols-1 grid-rows-4 row-start-1 col-start-1 row-span-3 col-span-3 h-full">
             <div className="grid col-span-3 row-start-3 items-center">
               <p className="text-3xl font-black">note</p>
               <p className="text-gray-500 font-black">content 1</p>
