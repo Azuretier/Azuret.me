@@ -16,7 +16,7 @@ export default function RainEffect() {
 
     async function init() {
       // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+      renderer = new THREE.WebGLRenderer({ antialias: false});
       renderer.setSize(window.innerWidth, window.innerHeight);
       containerRef.current?.appendChild(renderer.domElement);
 
