@@ -28,21 +28,23 @@ const Main = () => {
   const [displayedText, setDisplayedText] = useState("")
   const [textIndex, setTextIndex] = useState(0)
   const [typing, setTyping] = useState(true)
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(true);
 
   useEffect(() => {
-    const elements = document.querySelectorAll('.fade-up');
-    
-    elements.forEach((el, index) => {
+    if (!isLoaded) return;
+    setTimeout(() => setShowOverlay(false), 1000); // fade out loading
 
+    const elements = document.querySelectorAll(".fade-up");
+    elements.forEach((el, index) => {
       if (el instanceof HTMLElement) {
         el.style.opacity = "0";
-        // Add delay based on element index
         setTimeout(() => {
-          animate(el, { opacity: [0.1, 1], y: [50, 0] }, { type: 'spring'});
-        }, index * 150); // delay 150ms between each
+          animate(el, { opacity: [0, 1], y: [50, 0] }, { type: "spring" });
+        }, index * 150);
       }
     });
-  }, []);
+  }, [isLoaded]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
@@ -72,8 +74,14 @@ const Main = () => {
   }, [displayedText, typing, textIndex, texts])
 
   return (
+    
     <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
-      <RainEffect />
+      {showOverlay && (
+        <div className="fixed inset-0 bg-black flex items-center justify-center z-50 transition-opacity duration-700">
+          <span className="text-white text-2xl">Loading...</span>
+        </div>
+      )}
+      <RainEffect onLoaded={() => setIsLoaded(true)} />
       <motion.div className="fade-up grid bg-black/70 p-6 rounded-lg items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
         <div className="flex h-50 w-50 items-center justify-start row-span-2">
           <Image src="/azure.png" alt="avatar" width={200} height={200} />
