@@ -33,7 +33,8 @@ const Main = () => {
 
   useEffect(() => {
     if (!isLoaded) return;
-    setTimeout(() => setShowOverlay(false), 1000); // fade out loading
+    //setTimeout(() => setShowOverlay(false), 1000); // fade out loading
+    setShowOverlay(false)
 
     const elements = document.querySelectorAll(".fade-up");
     elements.forEach((el, index) => {
