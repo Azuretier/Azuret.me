@@ -1,11 +1,13 @@
 "use client";
-import { useEffect, useRef, useState} from "react";
+import { useEffect, useRef} from "react";
 import * as THREE from "three";
 
-export default function RainEffect() {
+interface RainEffectProps {
+  onLoaded: () => void; // notify parent when ready
+}
+
+export default function RainEffect({ onLoaded }: RainEffectProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(true);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -27,8 +29,7 @@ export default function RainEffect() {
       (tex) => {
         uniforms.u_tex0.value = tex;
         uniforms.u_tex0_resolution.value.set(tex.image.width, tex.image.height);
-        setIsLoaded(true);
-        setTimeout(() => setShowOverlay(false), 1000);
+        onLoaded();
       }
     );
 
@@ -91,25 +92,7 @@ export default function RainEffect() {
       containerRef.current?.removeChild(renderer.domElement);
       renderer.dispose();
     };
-  }, []);
+  }, [onLoaded]);
 
-  return (
-    <>
-      {/* Loading screen overlay */}
-      {showOverlay && (
-        <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black text-white transition-opacity duration-1000 ${
-            isLoaded ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-lg">Loading rain...</p>
-          </div>
-        </div>
-      )}
-
-      <div ref={containerRef} />
-    </>
-  );
+  return <div ref={containerRef} />
 }
