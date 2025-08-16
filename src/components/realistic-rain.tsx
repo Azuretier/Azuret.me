@@ -24,21 +24,21 @@ export default function RainEffect() {
 
     // All uniforms must be defined here
     const uniforms: Record<string, any> = {
-      u_tex0: { value: tex0 },
-      u_tex0_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-      u_time: { value: 0.0 },
-      u_speed: { value: 0.5 },
-      u_intensity: { value: 0.7 },
-      u_normal: { value: 0.5 },
-      u_brightness: { value: 1.0 },
-      u_blur_intensity: { value: 0.5 },
-      u_zoom: { value: 1.0 },
-      u_blur_iterations: { value: 16 },
-      u_panning: { value: false },
-      u_post_processing: { value: true },
-      u_lightning: { value: false },
-      u_texture_fill: { value: true },
+      u_tex0: { type: "t"},
+      u_time: { value: 0,},
+      u_intensity: { value: 0.4},
+      u_speed: { value: 0.25},
+      u_brightness: { value: 0.8},
+      u_normal: { value: 0.5},
+      u_zoom: { value: 2.61},
+      u_blur_intensity: { value: 0.5},
+      u_blur_iterations: { value: 16},
+      u_panning: { value: false},
+      u_post_processing: { value: true},
+      u_lightning: { value: false},
+      u_texture_fill: { value: true},
+      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
+      u_tex0_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
     };
 
     async function loadShader() {
