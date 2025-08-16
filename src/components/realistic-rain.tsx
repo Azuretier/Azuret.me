@@ -24,7 +24,7 @@ export default function RainEffect() {
 
     // All uniforms must be defined here
     const uniforms: Record<string, any> = {
-      u_tex0: { type: "t"},
+      u_tex0: { value: tex0 },
       u_time: { value: 0,},
       u_intensity: { value: 0.4},
       u_speed: { value: 0.25},
