@@ -12,11 +12,14 @@ export default function RainEffect() {
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     const renderer = new THREE.WebGLRenderer({ alpha: true }); // transparent
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
     renderer.domElement.style.position = "fixed";
     renderer.domElement.style.top = "0";
     renderer.domElement.style.left = "0";
-    renderer.domElement.style.zIndex = "9999"; // above all content
+    renderer.domElement.style.width = "100%";
+    renderer.domElement.style.height = "100%";
     renderer.domElement.style.pointerEvents = "none"; // clicks pass through
+    renderer.domElement.style.zIndex = "9999";    
     containerRef.current.appendChild(renderer.domElement);
 
     // uniforms: no PNG background now
