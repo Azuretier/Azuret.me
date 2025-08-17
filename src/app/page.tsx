@@ -42,7 +42,7 @@ const Main = () => {
       setShowLoadingScreen(false);
       setTransitionStarted(true);
       setTimeout(() => setTransitionDisplayed(false), 1100);
-      setTimeout(() => setFadeUpAnimationStarted(true), 800);
+      setTimeout(() => setFadeUpAnimationStarted(true), 500);
     }, 400); 
     // timeout runs on its own line, so it won't block the rest of the code
   }, [isLoaded]);
