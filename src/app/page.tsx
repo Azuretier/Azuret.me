@@ -52,7 +52,7 @@ const Main = () => {
         });
       }
     }
-  }, [showLoadingScreen, isLoaded]);
+  }, [showLoadingScreen, isLoaded, transitionComplete]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
