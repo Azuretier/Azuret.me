@@ -138,10 +138,6 @@ const Main = () => {
           <p className="text-2xl font-bold">Azuretier</p>
           <p className="text-sm text-gray-500">@09xgg</p>
         </div>
-        <div className="grid col-span-3 row-start-3 items-center">
-          <p className="text-3xl font-black">Azure</p>
-          <p className="text-lg font-black">He/Him</p>
-        </div>
         <div className="grid text-lg font-sanserif col-span-3 row-start-4">
           <div className="grid justify-start gap-2 grid-flow-col items-center">
             <FaBirthdayCake />
