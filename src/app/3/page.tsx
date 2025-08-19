@@ -96,8 +96,6 @@ const Main = () => {
       transition: {
         delay: i * 0.15,
         type: "spring",
-        stiffness: 200,
-        damping: 20,
       },
     }),
   }
