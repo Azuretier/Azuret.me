@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Inter, VT323 } from "next/font/google";
 import "./globals.css"; //apply style
 import React from 'react'
 
@@ -16,11 +17,22 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-sans", // Maps to var(--font-sans) in CSS
+});
+
+const vt323 = VT323({ 
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-pixel", // Maps to var(--font-pixel) in CSS
+});
+
 export const metadata: Metadata = {
-  title: 'azuret.net',
+  title: 'azuret.me',
   description: "A website created by Azuret.",
   openGraph: {
-    title: "azuret.net",
+    title: "azuret.me",
     description: "A website created by Azuret.",
     locale: 'ja-JP',
     type: 'website',
