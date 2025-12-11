@@ -15,16 +15,15 @@ const COLORS: Record<string, string> = {
 };
 const HOTBAR_ITEMS: BlockType[] = ['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian'];
 
-// Random Splashes
-const SPLASHES = [
-  "What DOES the fox say?",
-  "Also try Terraria!",
-  "Creeper? Aww man!",
-  "Now with 100% more voxels!",
-  "Web Edition!",
-  "Made by AI!",
+const TIPS = [
+  "Make some torches to light up areas at night. Monsters will avoid areas around these torches.",
+  "Obsidian can only be mined with a diamond pickaxe.",
+  "Press 'E' to view your inventory and craft items.",
   "Don't dig straight down!",
-  "Blocks everywhere!"
+  "Water and lava can be dangerous. Watch your step!",
+  "Crops grow faster if planted near water.",
+  "Wolves can be tamed with bones.",
+  "Shift-click to move items quickly between containers."
 ];
 
 export default function Home() {
@@ -32,11 +31,15 @@ export default function Home() {
   const [view, setView] = useState<'title' | 'worlds' | 'game' | 'loading'>('title');
   const [worlds, setWorlds] = useState<any[]>([]);
   const [selectedWorldId, setSelectedWorldId] = useState<string | null>(null);
-  const [loadingMsg, setLoadingMsg] = useState("Initializing...");
   const [modalCreate, setModalCreate] = useState(false);
   const [newWorldName, setNewWorldName] = useState("New World");
-  const [splashText, setSplashText] = useState("");
   
+  // Loading Screen State
+  const [loadingStatus, setLoadingStatus] = useState("Initializing server");
+  const [loadingSub, setLoadingSub] = useState("Loading spawn area...");
+  const [progress, setProgress] = useState(0);
+  const [currentTip, setCurrentTip] = useState("");
+
   const [showPreGame, setShowPreGame] = useState(false);
   const [paused, setPaused] = useState(false);
   const [coords, setCoords] = useState("0, 0, 0");
@@ -46,9 +49,6 @@ export default function Home() {
   const engineRef = useRef<VoxelEngine | null>(null);
 
   useEffect(() => {
-    // Set random splash on load
-    setSplashText(SPLASHES[Math.floor(Math.random() * SPLASHES.length)]);
-
     const unsub = onAuthStateChanged(auth, (u) => {
       if (u) setUser(u);
       else signInAnonymously(auth);
@@ -56,15 +56,32 @@ export default function Home() {
     return () => unsub();
   }, []);
 
+  // --- Loading Logic ---
+  const startLoadingSequence = (callback: () => void) => {
+    setView('loading');
+    setProgress(0);
+    setCurrentTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
+    setLoadingStatus("Initializing server");
+    setLoadingSub("Connecting to database...");
+
+    // Fake progress simulation to look like console edition
+    setTimeout(() => { setProgress(20); setLoadingSub("Finding Seed for the World Generator..."); }, 500);
+    setTimeout(() => { setProgress(50); setLoadingStatus("Generating World"); setLoadingSub("Building terrain..."); }, 1500);
+    setTimeout(() => { setProgress(80); setLoadingSub("Spawning entities..."); }, 3000);
+    setTimeout(() => { setProgress(100); setLoadingStatus("Loading"); setLoadingSub("Finalizing..."); }, 4500);
+    
+    // Actually run the game logic after delay
+    setTimeout(() => {
+        callback();
+    }, 5000);
+  };
+
   const fetchWorlds = async () => {
     if (!user) return;
-    setLoadingMsg("Fetching Worlds...");
-    setView('loading');
-    
+    // We don't use full load screen for fetching list, just simple state
     const path = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`;
     const q = query(collection(db, path), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    
     const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     setWorlds(list);
     setView('worlds');
@@ -73,55 +90,57 @@ export default function Home() {
   const createWorld = async () => {
     if (!user || !newWorldName.trim()) return;
     setModalCreate(false);
-    setLoadingMsg("Generating Terrain...");
-    setView('loading');
+    
+    startLoadingSequence(async () => {
+        try {
+            const newId = `world_${Date.now()}`;
+            const basePath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`;
+            
+            await setDoc(doc(db, basePath, newId), {
+                name: newWorldName, createdBy: user.uid, createdAt: Date.now()
+            });
 
-    try {
-      const newId = `world_${Date.now()}`;
-      const basePath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`;
-      
-      await setDoc(doc(db, basePath, newId), {
-        name: newWorldName, createdBy: user.uid, createdAt: Date.now()
-      });
-
-      const promises = [];
-      for(let x=-8; x<8; x++){
-        for(let z=-8; z<8; z++){
-          const bid = `${x}_0_${z}`;
-          promises.push(setDoc(doc(db, `${basePath}/${newId}/blocks`, bid), {
-            x: x*BLOCK_SIZE, y: -BLOCK_SIZE, z: z*BLOCK_SIZE, type: 'grass'
-          }));
+            const promises = [];
+            for(let x=-8; x<8; x++){
+                for(let z=-8; z<8; z++){
+                    const bid = `${x}_0_${z}`;
+                    promises.push(setDoc(doc(db, `${basePath}/${newId}/blocks`, bid), {
+                        x: x*BLOCK_SIZE, y: -BLOCK_SIZE, z: z*BLOCK_SIZE, type: 'grass'
+                    }));
+                }
+            }
+            loadGame(newId, true); // true = skip loading screen since we just showed it
+        } catch (e: any) {
+            alert("Error: " + e.message);
+            setView('worlds');
         }
-      }
-      loadGame(newId);
-    } catch (e: any) {
-      alert("Error: " + e.message);
-      setView('worlds');
-    }
+    });
   };
 
-  const loadGame = (worldId: string) => {
+  const loadGame = (worldId: string, skipLoading = false) => {
     if (!user) return;
-    setLoadingMsg("Entering Dimension...");
-    setView('loading');
-    
-    setTimeout(() => {
-      if (engineRef.current) engineRef.current.dispose();
-      
-      const worldPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`;
-      
-      if (containerRef.current) {
-        engineRef.current = new VoxelEngine(containerRef.current, worldPath, (x, y, z) => {
-          setCoords(`${x}, ${y}, ${z}`);
-        });
+
+    const initEngine = () => {
+        if (engineRef.current) engineRef.current.dispose();
+        const worldPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`;
         
-        (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
-        
-        setView('game');
-        setShowPreGame(true);
-        setPaused(false);
-      }
-    }, 500);
+        if (containerRef.current) {
+            engineRef.current = new VoxelEngine(containerRef.current, worldPath, (x, y, z) => {
+                setCoords(`${x}, ${y}, ${z}`);
+            });
+            (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
+            
+            setView('game');
+            setShowPreGame(true);
+            setPaused(false);
+        }
+    };
+
+    if (skipLoading) {
+        initEngine();
+    } else {
+        startLoadingSequence(initEngine);
+    }
   };
 
   const enterWorld = () => {
@@ -179,64 +198,62 @@ export default function Home() {
       {/* 3D CONTAINER */}
       <div ref={containerRef} className={styles.fullScreen} style={{ zIndex: 0 }} />
 
-      {/* --- TITLE SCREEN (Console Edition Style) --- */}
+      {/* --- TITLE SCREEN --- */}
       {view === 'title' && (
-        <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgPanorama}`}>
-          
-          <div className={styles.logoContainer}>
-            <h1 className={styles.gameLogo}>MINECRAFT</h1>
-            <div className={styles.gameSubtitle}>WEB EDITION</div>
-            <div className={styles.splashText}>{splashText}</div>
-          </div>
-
-          <div className={styles.menuContainer}>
-            <button disabled={!user} onClick={fetchWorlds} className={styles.consoleBtn}>Play Game</button>
-            <button className={styles.consoleBtn} disabled>Mini Games</button>
-            <button className={styles.consoleBtn} disabled>Leaderboards</button>
-            <button className={styles.consoleBtn} disabled>Help & Options</button>
-            <button className={styles.consoleBtn} disabled>Minecraft Store</button>
-          </div>
-
-          <div className={styles.bottomHint}>
-            <div className={styles.xButton}>
-              <span className={styles.xMark}>✕</span>
-            </div>
-            <span>Select</span>
-          </div>
-
+        <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgDirt} z-50`}>
+          <h1 className={styles.title}>VOXEL VERSE</h1>
+          <p className={styles.subtitle}>{user ? `Connected: ${user.uid.substring(0,5)}` : 'Connecting...'}</p>
+          <button disabled={!user} onClick={fetchWorlds} className={`${styles.btn} ${styles.btnPrimary}`}>PLAY GAME</button>
         </div>
       )}
 
-      {/* --- LOADING --- */}
+      {/* --- LOADING (CONSOLE EDITION STYLE) --- */}
       {view === 'loading' && (
-        <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgLoading}`}>
-          <div className={styles.spinner}></div>
-          <h2 style={{fontFamily:'var(--font-pixel)', fontSize: '2rem'}}>{loadingMsg}</h2>
+        <div className={`${styles.fullScreen} ${styles.loadingScreen}`}>
+          <div className={styles.loadingOverlay}>
+            
+            {/* Top Logo */}
+            <h1 className={styles.loadingLogo}>VOXEL VERSE</h1>
+
+            {/* Middle Status & Bar */}
+            <div className={styles.loadingCenter}>
+                <div className={styles.loadingStatus}>{loadingStatus}</div>
+                <div className={styles.loadingSubText}>{loadingSub}</div>
+                
+                <div className={styles.progressTrack}>
+                    <div className={styles.progressFill} style={{ width: `${progress}%` }}></div>
+                </div>
+            </div>
+
+            {/* Bottom Tip Box */}
+            <div className={styles.tipBox}>
+                {currentTip}
+            </div>
+
+          </div>
         </div>
       )}
 
       {/* --- WORLD SELECT --- */}
       {view === 'worlds' && (
-        <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgPanorama}`}>
-          <h1 className={styles.gameLogo} style={{fontSize: '4rem', marginBottom: '20px'}}>SELECT WORLD</h1>
-          
+        <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgDirt} z-50`}>
+          <h1 className={styles.heading}>SELECT WORLD</h1>
           <div className={styles.listContainer}>
-            {worlds.length === 0 && <div style={{textAlign:'center', marginTop: 100, color:'#888', fontFamily: 'var(--font-pixel)', fontSize: '1.5rem'}}>No worlds created yet.</div>}
+            {worlds.length === 0 && <div style={{textAlign:'center', marginTop: 100, color:'#888'}}>No worlds found.</div>}
             {worlds.map(w => (
               <div key={w.id} 
                    onClick={() => setSelectedWorldId(w.id)}
                    className={`${styles.worldRow} ${selectedWorldId === w.id ? styles.worldRowSelected : ''}`}>
-                <span>{w.name}</span>
+                <span style={{fontWeight: 'bold'}}>{w.name}</span>
                 <span style={{fontSize: '0.8rem', color:'#aaa'}}>{new Date(w.createdAt).toLocaleDateString()}</span>
               </div>
             ))}
           </div>
-
-          <div style={{display:'flex', gap: '10px', marginTop: '10px'}}>
-            <button onClick={() => setModalCreate(true)} className={styles.consoleBtn} style={{width: '200px'}}>Create New</button>
-            <button disabled={!selectedWorldId} onClick={() => loadGame(selectedWorldId!)} className={styles.consoleBtn} style={{width: '200px'}}>Load</button>
+          <div className={styles.row}>
+            <button onClick={() => setModalCreate(true)} className={`${styles.btn} ${styles.btnPrimary}`}>CREATE NEW</button>
+            <button disabled={!selectedWorldId} onClick={() => loadGame(selectedWorldId!)} className={styles.btn}>LOAD SELECTED</button>
           </div>
-          <button onClick={() => setView('title')} className={styles.consoleBtn} style={{width: '200px', marginTop: '10px', backgroundColor: '#8b0000'}}>Back</button>
+          <button onClick={() => setView('title')} className={`${styles.btn} ${styles.btnDanger}`} style={{marginTop: 20}}>BACK</button>
         </div>
       )}
 
@@ -244,16 +261,15 @@ export default function Home() {
       {modalCreate && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
           <div className={styles.modalBox}>
-            <h2 style={{fontSize: '2rem', marginBottom: '1rem'}}>NAME YOUR WORLD</h2>
+            <h2 className={styles.heading}>NAME WORLD</h2>
             <input 
               value={newWorldName}
               onChange={(e) => setNewWorldName(e.target.value)}
               className={styles.input}
-              placeholder="New World"
             />
-            <div style={{display:'flex', justifyContent: 'center', gap: '10px'}}>
-              <button onClick={createWorld} className={styles.consoleBtn} style={{width: '150px', backgroundColor: '#4CAF50'}}>Create</button>
-              <button onClick={() => setModalCreate(false)} className={styles.consoleBtn} style={{width: '150px', backgroundColor: '#d32f2f'}}>Cancel</button>
+            <div className={styles.row}>
+              <button onClick={createWorld} className={`${styles.btn} ${styles.btnPrimary}`} style={{width: 130}}>CREATE</button>
+              <button onClick={() => setModalCreate(false)} className={`${styles.btn} ${styles.btnDanger}`} style={{width: 130}}>CANCEL</button>
             </div>
           </div>
         </div>
@@ -262,22 +278,19 @@ export default function Home() {
       {/* --- PRE-GAME --- */}
       {view === 'game' && showPreGame && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
-          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', color: '#4CAF50', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>WORLD READY!</h1>
-          <p style={{color: '#ddd', marginBottom: '30px', fontFamily: 'monospace'}}>Press the button below to capture mouse control.</p>
-          <button onClick={enterWorld} className={styles.consoleBtn} style={{width: '300px', padding: '20px'}}>ENTER WORLD</button>
-          <button onClick={quitGame} className={styles.consoleBtn} style={{width: '300px', marginTop: '10px', backgroundColor: '#d32f2f'}}>EXIT</button>
+          <h1 className={styles.heading} style={{color: '#4CAF50'}}>WORLD READY!</h1>
+          <p style={{color: '#aaa', marginBottom: 30}}>Click button below to capture mouse.</p>
+          <button onClick={enterWorld} className={`${styles.btn} ${styles.btnPrimary}`} style={{width: 400, height: 80, fontSize: '2rem'}}>ENTER WORLD</button>
+          <button onClick={quitGame} className={`${styles.btn} ${styles.btnDanger}`}>ABORT</button>
         </div>
       )}
 
       {/* --- PAUSE MENU --- */}
       {view === 'game' && paused && !showPreGame && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
-          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', marginBottom: '2rem', textShadow: '2px 2px 0 #000'}}>GAME PAUSED</h1>
-          <div className={styles.menuContainer}>
-            <button onClick={() => document.body.requestPointerLock()} className={styles.consoleBtn}>Resume Game</button>
-            <button disabled className={styles.consoleBtn}>Options</button>
-            <button onClick={quitGame} className={styles.consoleBtn} style={{backgroundColor: '#d32f2f'}}>Save & Quit</button>
-          </div>
+          <h1 className={styles.heading}>PAUSED</h1>
+          <button onClick={() => document.body.requestPointerLock()} className={`${styles.btn} ${styles.btnPrimary}`}>RESUME</button>
+          <button onClick={quitGame} className={`${styles.btn} ${styles.btnDanger}`}>SAVE & QUIT</button>
         </div>
       )}
 
