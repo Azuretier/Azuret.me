@@ -45,7 +45,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     <html lang='ja'>
       <meta name="theme-color" content="#ffbd43"></meta>
       <link rel="icon" href="/favicon.ico" />
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${vt323.variable} antialiased`}>
         <Provider>
           {children}
         </Provider>
