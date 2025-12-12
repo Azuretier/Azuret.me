@@ -43,18 +43,7 @@ export default function Home() {
   const [paused, setPaused] = useState(false);
   const [coords, setCoords] = useState("0, 0, 0");
   const [selectedSlot, setSelectedSlot] = useState(0);
-
-  // CONSOLE EDITION SETTINGS STATE
-  const [settings, setSettings] = useState({
-    verticalSplit: false, // Visual only
-    autoJump: false,
-    viewBobbing: true,
-    viewRolling: true, // Visual/Placebo for now
-    hints: true,
-    deathMessages: true,
-    sensitivity: 20, // 0-100
-    difficulty: 'Easy' // Easy, Normal, Hard
-  });
+  const [sensitivity, setSensitivity] = useState(20);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
@@ -67,20 +56,12 @@ export default function Home() {
     return () => unsub();
   }, []);
 
-  // Update Engine when settings change
+  // Update Sensitivity Live
   useEffect(() => {
     if (engineRef.current) {
-        engineRef.current.updateSettings({
-            sensitivity: settings.sensitivity / 10000,
-            autoJump: settings.autoJump,
-            viewBobbing: settings.viewBobbing
-        });
+        engineRef.current.setSensitivity(sensitivity / 10000);
     }
-  }, [settings]);
-
-  const toggleSetting = (key: keyof typeof settings) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  }, [sensitivity]);
 
   const startLoadingSequence = (callback: () => void) => {
     setView('loading');
@@ -138,12 +119,8 @@ export default function Home() {
         if (containerRef.current) {
             engineRef.current = new VoxelEngine(containerRef.current, worldPath, (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); });
             (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
-            // Apply initial settings
-            engineRef.current.updateSettings({
-                sensitivity: settings.sensitivity / 10000,
-                autoJump: settings.autoJump,
-                viewBobbing: settings.viewBobbing
-            });
+            // Initialize sensitivity
+            engineRef.current.setSensitivity(sensitivity / 10000);
             setView('game');
             setShowPreGame(true);
             setPaused(false);
@@ -301,84 +278,29 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- PAUSE / SETTINGS (RECREATED FROM IMAGE) --- */}
+      {/* --- PAUSE MENU (RESTORED SIMPLE STYLE) --- */}
       {view === 'game' && paused && !showPreGame && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
-          
-          <div className={styles.logoContainer} style={{marginTop:0, marginBottom:10}}>
-            <h1 className={styles.logoMain} style={{fontSize:'5rem'}}>MINECRAFT</h1>
-            <div className={styles.logoSub} style={{fontSize:'1.5rem'}}>NINTENDO SWITCH EDITION</div>
+          <div className={styles.modalBox} style={{width: 500}}>
+            <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '3rem', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>GAME PAUSED</h1>
+            
+            <div style={{marginBottom: 30, width:'100%'}}>
+                <label style={{fontFamily: 'var(--font-pixel)', fontSize:'1.5rem', display:'block', marginBottom:10}}>
+                    Sensitivity: {sensitivity}%
+                </label>
+                <input 
+                    type="range" 
+                    min="1" 
+                    max="100" 
+                    value={sensitivity} 
+                    onChange={(e) => setSensitivity(parseInt(e.target.value))}
+                    style={{width: '90%', cursor:'pointer'}}
+                />
+            </div>
+
+            <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn} style={{marginBottom:10}}>Resume Game</button>
+            <button onClick={quitGame} className={styles.switchBtn}>Save & Quit</button>
           </div>
-
-          <div className={styles.settingsBox}>
-            {/* Vertical Splitscreen (Visual Only) */}
-            <div className={`${styles.optionRow} ${settings.verticalSplit ? styles.checked : ''}`} onClick={() => toggleSetting('verticalSplit')}>
-                <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                <span className={styles.labelText}>Vertical Splitscreen</span>
-            </div>
-
-            {/* Auto Jump */}
-            <div className={`${styles.optionRow} ${settings.autoJump ? styles.checked : ''}`} onClick={() => toggleSetting('autoJump')}>
-                <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                <span className={styles.labelText}>Auto Jump</span>
-            </div>
-
-            {/* View Bobbing */}
-            <div className={`${styles.optionRow} ${settings.viewBobbing ? styles.checked : ''}`} onClick={() => toggleSetting('viewBobbing')}>
-                <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                <span className={styles.labelText}>View Bobbing</span>
-            </div>
-
-            {/* Flying View Rolling */}
-            <div className={`${styles.optionRow} ${settings.viewRolling ? styles.checked : ''}`} onClick={() => toggleSetting('viewRolling')}>
-                <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                <span className={styles.labelText}>Flying View Rolling</span>
-            </div>
-
-            {/* Hints */}
-            <div className={`${styles.optionRow} ${settings.hints ? styles.checked : ''}`} onClick={() => toggleSetting('hints')}>
-                <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                <span className={styles.labelText}>Hints</span>
-            </div>
-
-            {/* Death Messages */}
-            <div className={`${styles.optionRow} ${settings.deathMessages ? styles.checked : ''}`} onClick={() => toggleSetting('deathMessages')}>
-                <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
-                <span className={styles.labelText}>Death Messages</span>
-            </div>
-
-            {/* Game Sensitivity Slider */}
-            <div className={styles.sliderContainer}>
-                <input type="range" min="1" max="200" value={settings.sensitivity} 
-                       onChange={(e) => setSettings({...settings, sensitivity: parseInt(e.target.value)})} 
-                       className={styles.sliderInput} />
-                <div className={styles.sliderLabel}>Game Sensitivity: {settings.sensitivity}%</div>
-            </div>
-
-            {/* Difficulty Slider (Visual Mock) */}
-            <div className={styles.sliderContainer}>
-                <div className={styles.sliderLabel}>Difficulty: {settings.difficulty}</div>
-                <input type="range" min="0" max="3" value={settings.difficulty === 'Peaceful' ? 0 : settings.difficulty === 'Easy' ? 1 : settings.difficulty === 'Normal' ? 2 : 3}
-                       onChange={(e) => {
-                           const val = parseInt(e.target.value);
-                           const d = val === 0 ? 'Peaceful' : val === 1 ? 'Easy' : val === 2 ? 'Normal' : 'Hard';
-                           setSettings({...settings, difficulty: d});
-                       }}
-                       className={styles.sliderInput} />
-            </div>
-          </div>
-
-          <div className={styles.footerBar}>
-            <div className={styles.footerItem}>
-              <div className={styles.btnIcon} onClick={() => document.body.requestPointerLock()}>A</div>
-              <span>Select</span>
-            </div>
-            <div className={styles.footerItem}>
-              <div className={styles.btnIcon} onClick={quitGame}>B</div>
-              <span>Back</span>
-            </div>
-          </div>
-
         </div>
       )}
 
@@ -386,6 +308,7 @@ export default function Home() {
       {view === 'game' && !showPreGame && (
         <div className={`${styles.fullScreen} ${styles.hudLayer}`}>
           <div className={styles.crosshair}></div>
+          <div className={styles.coords}>{coords}</div>
           <div className={styles.hotbar}>
             {HOTBAR_ITEMS.map((item, idx) => (
               <div key={item} 

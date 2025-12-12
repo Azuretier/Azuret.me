@@ -11,12 +11,6 @@ const COLORS: Record<string, number> = {
     water: 0x40a4df, obsidian: 0x121212, sand: 0xc2b280
 };
 
-export interface GameSettings {
-    sensitivity: number;
-    autoJump: boolean;
-    viewBobbing: boolean;
-}
-
 export class VoxelEngine {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
@@ -36,16 +30,9 @@ export class VoxelEngine {
     public isRunning = false;
     public isPaused = false;
     
-    // Settings
-    public settings: GameSettings = {
-        sensitivity: 0.002,
-        autoJump: false,
-        viewBobbing: true
-    };
+    // Only Sensitivity remains
+    public sensitivity = 0.002;
 
-    // Bobbing State
-    private bobTimer = 0;
-    
     private container: HTMLElement;
     private worldPath: string;
     private updateHUD: (x: number, y: number, z: number) => void;
@@ -81,8 +68,8 @@ export class VoxelEngine {
         this.animate();
     }
 
-    public updateSettings(newSettings: Partial<GameSettings>) {
-        this.settings = { ...this.settings, ...newSettings };
+    public setSensitivity(val: number) {
+        this.sensitivity = val;
     }
 
     private setupLights() {
@@ -151,9 +138,7 @@ export class VoxelEngine {
         direction.set(Number(this.moveState.right) - Number(this.moveState.left), 0, Number(this.moveState.bwd) - Number(this.moveState.fwd));
         direction.normalize();
 
-        const isMoving = (this.moveState.fwd || this.moveState.bwd || this.moveState.left || this.moveState.right);
-
-        if (isMoving) {
+        if (this.moveState.fwd || this.moveState.bwd || this.moveState.left || this.moveState.right) {
             const camDir = new THREE.Vector3();
             this.camera.getWorldDirection(camDir); camDir.y = 0; camDir.normalize();
             const camRight = new THREE.Vector3();
@@ -162,30 +147,6 @@ export class VoxelEngine {
             moveVec.normalize();
             const speed = this.onGround ? 2000 : 500;
             this.velocity.addScaledVector(moveVec, speed * delta);
-        }
-
-        // --- Auto Jump Logic ---
-        if (this.settings.autoJump && isMoving && this.onGround) {
-            // Check if blocked horizontally but clear above
-            const forwardDir = new THREE.Vector3(this.velocity.x, 0, this.velocity.z).normalize();
-            const footPos = this.camera.position.clone().add(new THREE.Vector3(0, -15, 0));
-            const kneePos = footPos.clone().add(forwardDir.clone().multiplyScalar(5)); // Look slightly ahead
-            
-            // Very simple raycast check for block at knee level
-            this.raycaster.set(footPos, forwardDir);
-            const hits = this.raycaster.intersectObjects(this.objects);
-            if (hits.length > 0 && hits[0].distance < 6) {
-                // Block in front, jump
-                this.velocity.y = 150;
-                this.onGround = false;
-            }
-        }
-
-        // --- View Bobbing Logic ---
-        if (this.settings.viewBobbing && this.onGround && isMoving) {
-            this.bobTimer += delta * 15;
-            // Simple sin wave bobbing
-            this.camera.position.y += Math.sin(this.bobTimer) * 0.5;
         }
 
         this.camera.position.x += this.velocity.x * delta;
@@ -257,8 +218,8 @@ export class VoxelEngine {
         if (!this.isRunning || this.isPaused) return;
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.camera.quaternion);
-        euler.y -= e.movementX * this.settings.sensitivity;
-        euler.x -= e.movementY * this.settings.sensitivity;
+        euler.y -= e.movementX * this.sensitivity;
+        euler.x -= e.movementY * this.sensitivity;
         euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
         this.camera.quaternion.setFromEuler(euler);
     }
