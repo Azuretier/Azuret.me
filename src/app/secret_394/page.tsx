@@ -8,7 +8,6 @@ import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
 import PanoramaBackground from "@/components/PanoramaBackground";
 import styles from "@/styles/Home.module.css";
 
-const BLOCK_SIZE = 10;
 const COLORS: Record<string, string> = {
   grass: '#567d46', dirt: '#5d4037', stone: '#757575',
   wood: '#4e342e', brick: '#8d6e63', leaves: '#2e7d32',
@@ -17,12 +16,7 @@ const COLORS: Record<string, string> = {
 const HOTBAR_ITEMS: BlockType[] = ['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian'];
 
 const FIXED_SPLASH = "Music by C418!";
-const TIPS = [
-  "Make some torches to light up areas at night.", "Obsidian needs a diamond pickaxe.",
-  "Press 'E' to view inventory.", "Don't dig straight down!",
-  "Water and lava are dangerous.", "Crops grow faster near water.",
-  "Wolves can be tamed with bones.", "Shift-click to move items quickly."
-];
+const TIPS = ["Make torches!", "Don't dig down!", "Crops need water."];
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -30,16 +24,13 @@ export default function Home() {
   const [worlds, setWorlds] = useState<any[]>([]);
   const [selectedWorldId, setSelectedWorldId] = useState<string | null>(null);
   const [modalCreate, setModalCreate] = useState(false);
-  
-  // World Creation State
   const [newWorldName, setNewWorldName] = useState("New World");
-  const [newWorldType, setNewWorldType] = useState<0 | 1>(0); // 0 = Default, 1 = Superflat
+  const [newWorldType, setNewWorldType] = useState<0 | 1>(0);
 
   // Loading
-  const [loadingStatus, setLoadingStatus] = useState("Initializing server");
-  const [loadingSub, setLoadingSub] = useState("Loading spawn area...");
+  const [loadingStatus, setLoadingStatus] = useState("");
+  const [loadingSub, setLoadingSub] = useState("");
   const [progress, setProgress] = useState(0);
-  const [currentTip, setCurrentTip] = useState("");
 
   // Game & Settings
   const [showPreGame, setShowPreGame] = useState(false);
@@ -47,8 +38,6 @@ export default function Home() {
   const [coords, setCoords] = useState("0, 0, 0");
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [sensitivity, setSensitivity] = useState(20);
-  
-  // Nested Menu State: 'main' or 'options'
   const [pauseMenuState, setPauseMenuState] = useState<'main' | 'options'>('main');
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,135 +51,79 @@ export default function Home() {
     return () => unsub();
   }, []);
 
-  // Load Settings
   useEffect(() => {
     if (!user) return;
-    const fetchOptions = async () => {
-        try {
-            const optionsPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`;
-            const snap = await getDoc(doc(db, optionsPath));
-            if (snap.exists()) {
-                const data = snap.data();
-                if (data.sensitivity) setSensitivity(data.sensitivity);
-            }
-        } catch (error) {
-            console.error("Error loading options:", error);
-        }
-    };
-    fetchOptions();
+    getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`))
+      .then(snap => { if(snap.exists()) setSensitivity(snap.data().sensitivity); });
   }, [user]);
 
-  // Save Settings
   useEffect(() => {
     if (!user) return;
-    const saveTimer = setTimeout(() => {
-        const optionsPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`;
-        setDoc(doc(db, optionsPath), { sensitivity, updatedAt: Date.now() }, { merge: true })
-            .catch(err => console.error("Save failed", err));
+    const t = setTimeout(() => {
+      setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`), 
+      { sensitivity, updatedAt: Date.now() }, { merge: true });
     }, 1000);
-    return () => clearTimeout(saveTimer);
+    return () => clearTimeout(t);
   }, [sensitivity, user]);
 
   useEffect(() => {
-    if (engineRef.current) {
-        engineRef.current.setSensitivity(sensitivity / 10000);
-    }
+    if (engineRef.current) engineRef.current.setSensitivity(sensitivity / 10000);
   }, [sensitivity]);
 
   const startLoadingSequence = (callback: () => void) => {
-    setView('loading');
-    setProgress(0);
-    setCurrentTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
-    setLoadingStatus("Initializing server");
-    setLoadingSub("Connecting to database...");
-
-    setTimeout(() => { setProgress(20); setLoadingSub("Finding Seed for the World Generator..."); }, 500);
-    setTimeout(() => { setProgress(50); setLoadingStatus("Generating World"); setLoadingSub("Building terrain..."); }, 1500);
-    setTimeout(() => { setProgress(80); setLoadingSub("Spawning entities..."); }, 3000);
-    setTimeout(() => { setProgress(100); setLoadingStatus("Loading"); setLoadingSub("Finalizing..."); }, 4500);
-    setTimeout(() => { callback(); }, 5000);
+    setView('loading'); setProgress(0); setLoadingStatus("Initializing");
+    setTimeout(() => { setProgress(50); setLoadingStatus("Generating Terrain"); }, 1000);
+    setTimeout(() => { setProgress(100); setLoadingStatus("Done"); }, 2000);
+    setTimeout(callback, 2500);
   };
 
   const fetchWorlds = async () => {
     if (!user) return;
-    const path = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`;
-    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    setWorlds(list);
+    setWorlds(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     setView('worlds');
   };
 
   const createWorld = async () => {
-    if (!user || !newWorldName.trim()) return;
+    if (!user) return;
     setModalCreate(false);
+    const newId = `world_${Date.now()}`;
+    const seed = Math.floor(Math.random() * 65536);
+    const typeStr = newWorldType === 0 ? 'default' : 'superflat';
     
-    startLoadingSequence(async () => {
-        try {
-            const newId = `world_${Date.now()}`;
-            const basePath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`;
-            
-            // 1. Generate Seed
-            const seed = Math.floor(Math.random() * 65536);
-            const typeStr = newWorldType === 0 ? 'default' : 'superflat';
-
-            // 2. Save Metadata ONLY (No blocks)
-            // World generation is now handled procedurally by the engine based on seed
-            await setDoc(doc(db, basePath, newId), { 
-                name: newWorldName, 
-                createdBy: user.uid, 
-                createdAt: Date.now(),
-                seed: seed,
-                type: typeStr
-            });
-
-            // 3. Load
-            loadGame(newId, true, { seed, type: typeStr }); 
-        } catch (e: any) {
-            alert("Error: " + e.message);
-            setView('worlds');
-        }
+    await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${newId}`), { 
+        name: newWorldName, createdBy: user.uid, createdAt: Date.now(), seed, type: typeStr 
     });
+    loadGame(newId, false, { seed, type: typeStr as any });
   };
 
   const loadGame = async (worldId: string, skipLoading = false, directParams?: any) => {
     if (!user) return;
-
-    // Helper to start engine
-    const initEngine = (params: { seed: number, type: 'default' | 'superflat' }) => {
+    const init = (params: any) => {
         if (engineRef.current) engineRef.current.dispose();
-        const worldPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`;
-        
         if (containerRef.current) {
             engineRef.current = new VoxelEngine(
                 containerRef.current, 
-                worldPath, 
-                (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); },
-                params // Pass seed and type
+                `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`, 
+                (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); }, // This is throttled in Engine now
+                params
             );
             (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
             engineRef.current.setSensitivity(sensitivity / 10000);
-            
-            setView('game');
-            setShowPreGame(true);
-            setPaused(false);
-            setPauseMenuState('main');
+            setView('game'); setShowPreGame(true); setPaused(false); setPauseMenuState('main');
         }
     };
 
-    if (directParams) {
-        if (skipLoading) initEngine(directParams);
-        else startLoadingSequence(() => initEngine(directParams));
+    if(directParams) {
+        skipLoading ? init(directParams) : startLoadingSequence(() => init(directParams));
     } else {
-        // Fetch params from DB if not provided
-        const worldPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`;
-        const snap = await getDoc(doc(db, worldPath, worldId));
-        if(!snap.exists()) return;
-        const d = snap.data();
-        const params = { seed: d.seed || 0, type: d.type || 'default' };
-        
-        if (skipLoading) initEngine(params);
-        else startLoadingSequence(() => initEngine(params));
+        const snap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`));
+        if(snap.exists()) {
+            const d = snap.data();
+            const params = { seed: d.seed || 0, type: d.type || 'default' };
+            skipLoading ? init(params) : startLoadingSequence(() => init(params));
+        }
     }
   };
 
@@ -211,6 +144,7 @@ export default function Home() {
         setPaused(false);
         if (engineRef.current) engineRef.current.isPaused = false;
       } else {
+        // Only pause if we are actually in the game and not just starting
         if (view === 'game' && !showPreGame) {
           setPaused(true);
           setPauseMenuState('main');
@@ -241,10 +175,9 @@ export default function Home() {
         <PanoramaBackground /> 
         <div className={styles.vignette}></div>
       </div>
-
       <div ref={containerRef} className={styles.fullScreen} style={{ zIndex: 0 }} />
 
-      {/* --- TITLE SCREEN --- */}
+      {/* TITLES */}
       {view === 'title' && (
         <div className={styles.fullScreen}>
           <div className={styles.menuLayer}>
@@ -256,111 +189,110 @@ export default function Home() {
             <div className={styles.menuContainer}>
               <button disabled={!user} onClick={fetchWorlds} className={styles.switchBtn}>Play Game</button>
               <button className={styles.switchBtn}>Mini Games</button>
-              <button className={styles.switchBtn}>Achievements</button>
-              <button className={styles.switchBtn}>Help & Options</button>
-              <button className={styles.switchBtn}>Minecraft Store</button>
-            </div>
-            <div className={styles.footerBar}>
-              <div className={styles.footerItem}>
-                <div className={styles.btnIcon}>A</div><span>Select</span>
-              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- LOADING --- */}
+      {/* LOADING */}
       {view === 'loading' && (
         <div className={`${styles.fullScreen} ${styles.loadingScreen}`}>
           <div className={styles.loadingOverlay}>
             <h1 className={styles.loadingLogo}>MINECRAFT</h1>
             <div className={styles.loadingCenter}>
                 <div className={styles.loadingStatus}>{loadingStatus}</div>
-                <div className={styles.loadingSubText}>{loadingSub}</div>
-                <div className={styles.progressTrack}>
-                    <div className={styles.progressFill} style={{ width: `${progress}%` }}></div>
-                </div>
+                <div className={styles.progressTrack}><div className={styles.progressFill} style={{width:`${progress}%`}}></div></div>
             </div>
-            <div className={styles.tipBox}>{currentTip}</div>
           </div>
         </div>
       )}
 
-      {/* --- WORLD SELECT --- */}
+      {/* WORLDS */}
       {view === 'worlds' && (
         <div className={styles.fullScreen}>
           <div className={styles.menuLayer}>
             <h1 className={styles.logoMain} style={{fontSize: '4rem', marginTop: 20}}>SELECT WORLD</h1>
             <div className={styles.listContainer}>
               {worlds.map(w => (
-                <div key={w.id} onClick={() => setSelectedWorldId(w.id)}
-                    className={`${styles.worldRow} ${selectedWorldId === w.id ? styles.worldRowSelected : ''}`}>
-                  <span>{w.name}</span>
-                  <span style={{fontSize: '0.8rem', color:'#aaa'}}>{new Date(w.createdAt).toLocaleDateString()}</span>
+                <div key={w.id} onClick={() => setSelectedWorldId(w.id)} className={`${styles.worldRow} ${selectedWorldId === w.id ? styles.worldRowSelected : ''}`}>
+                  <span>{w.name}</span><span>{new Date(w.createdAt).toLocaleDateString()}</span>
                 </div>
               ))}
             </div>
             <div className={styles.row}>
-              <button onClick={() => setModalCreate(true)} className={styles.switchBtn} style={{width:'200px'}}>Create New</button>
-              <button disabled={!selectedWorldId} onClick={() => loadGame(selectedWorldId!)} className={styles.switchBtn} style={{width:'200px'}}>Load</button>
+                <button onClick={() => setModalCreate(true)} className={styles.switchBtn} style={{width:'200px'}}>Create New</button>
+                <button disabled={!selectedWorldId} onClick={() => loadGame(selectedWorldId!)} className={styles.switchBtn} style={{width:'200px'}}>Load</button>
             </div>
             <button onClick={() => setView('title')} className={styles.switchBtn} style={{width:'200px', marginTop:20}}>Back</button>
           </div>
         </div>
       )}
 
-      {/* --- CREATE MODAL (UPDATED) --- */}
+      {/* CREATE MODAL */}
       {modalCreate && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
           <div className={styles.modalBox}>
-            <h2 style={{fontSize: '2rem', marginBottom: '1rem'}}>CREATE NEW WORLD</h2>
-            
-            <input value={newWorldName} onChange={(e) => setNewWorldName(e.target.value)} className={styles.input} placeholder="World Name" />
-
-            {/* GENERATION SLIDER */}
+            <h2 style={{fontSize: '2rem'}}>CREATE NEW WORLD</h2>
+            <input value={newWorldName} onChange={(e) => setNewWorldName(e.target.value)} className={styles.input} placeholder="Name" />
             <div className={styles.sliderContainer} style={{width: '95%', marginBottom: 30}}>
-                <input type="range" min="0" max="1" step="1"
-                    value={newWorldType} 
-                    onChange={(e) => setNewWorldType(parseInt(e.target.value) as 0|1)} 
-                    className={styles.sliderInput} />
-                <div className={styles.sliderLabel}>
-                    Type: {newWorldType === 0 ? 'DEFAULT' : 'SUPERFLAT'}
-                </div>
+                <input type="range" min="0" max="1" step="1" value={newWorldType} onChange={(e) => setNewWorldType(parseInt(e.target.value) as 0|1)} className={styles.sliderInput} />
+                <div className={styles.sliderLabel}>Type: {newWorldType === 0 ? 'DEFAULT' : 'SUPERFLAT'}</div>
             </div>
-
             <div className={styles.row}>
-              <button onClick={createWorld} className={styles.switchBtn} style={{width:'150px'}}>Create</button>
-              <button onClick={() => setModalCreate(false)} className={styles.switchBtn} style={{width:'150px'}}>Cancel</button>
+              <button onClick={createWorld} className={styles.switchBtn}>Create</button>
+              <button onClick={() => setModalCreate(false)} className={styles.switchBtn}>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- PRE-GAME --- */}
+      {/* PRE GAME */}
       {view === 'game' && showPreGame && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
-          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', color: '#4CAF50', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>WORLD READY!</h1>
+          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', color: '#4CAF50', textShadow: '2px 2px 0 #000'}}>READY!</h1>
           <button onClick={enterWorld} className={styles.switchBtn} style={{width: '300px'}}>START GAME</button>
         </div>
       )}
 
-      {/* --- HUD --- */}
+      {/* PAUSE MENU */}
+      {view === 'game' && paused && !showPreGame && (
+        <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
+          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>
+            {pauseMenuState === 'main' ? 'GAME PAUSED' : 'OPTIONS'}
+          </h1>
+          <div className={styles.menuContainer}>
+            {pauseMenuState === 'main' && (
+                <>
+                    <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn}>Resume Game</button>
+                    <button onClick={() => setPauseMenuState('options')} className={styles.switchBtn}>Options</button>
+                    <button onClick={quitGame} className={styles.switchBtn}>Save & Quit</button>
+                </>
+            )}
+            {pauseMenuState === 'options' && (
+                <>
+                    <div className={styles.sliderContainer}>
+                        <input type="range" min="1" max="200" value={sensitivity} onChange={(e) => setSensitivity(parseInt(e.target.value))} className={styles.sliderInput} />
+                        <div className={styles.sliderLabel}>Sensitivity: {sensitivity}%</div>
+                    </div>
+                    <button onClick={() => setPauseMenuState('main')} className={styles.switchBtn}>Back</button>
+                </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* HUD */}
       {view === 'game' && !showPreGame && (
         <div className={`${styles.fullScreen} ${styles.hudLayer}`}>
           <div className={styles.crosshair}></div>
           <div className={styles.coords}>{coords}</div>
           <div className={styles.hotbar}>
             {HOTBAR_ITEMS.map((item, idx) => (
-              <div key={item} 
-                   onClick={() => setSelectedSlot(idx)}
-                   className={`${styles.slot} ${selectedSlot === idx ? styles.slotActive : ''}`}
-                   style={{ backgroundColor: COLORS[item] }}
-              />
+              <div key={item} onClick={() => setSelectedSlot(idx)} className={`${styles.slot} ${selectedSlot === idx ? styles.slotActive : ''}`} style={{ backgroundColor: COLORS[item] }} />
             ))}
           </div>
         </div>
       )}
-
     </main>
   );
 }

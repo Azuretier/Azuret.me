@@ -5,9 +5,9 @@ import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firesto
 export type BlockType = 'grass' | 'dirt' | 'stone' | 'wood' | 'brick' | 'leaves' | 'water' | 'obsidian' | 'sand' | 'air';
 
 const BLOCK_SIZE = 10;
+const HALF_BLOCK = BLOCK_SIZE / 2; // Fixed: Offset for mesh alignment
 const CHUNK_SIZE = 16;
-const WORLD_HEIGHT = 128; // Height limit
-const RENDER_DISTANCE = 4; // Chunks radius
+const RENDER_DISTANCE = 4; 
 
 const COLORS: Record<string, { r: number, g: number, b: number }> = {
     grass: { r: 0.34, g: 0.49, b: 0.27 },
@@ -22,7 +22,7 @@ const COLORS: Record<string, { r: number, g: number, b: number }> = {
     air: { r: 0, g: 0, b: 0 }
 };
 
-// --- PERLIN NOISE (Simplified for performance) ---
+// --- PERLIN NOISE ---
 class Perlin {
     private p: number[] = [];
     constructor(seed: number) {
@@ -62,7 +62,7 @@ class Perlin {
 // --- CHUNK CLASS ---
 class Chunk {
     public mesh: THREE.Mesh | null = null;
-    public data: Map<string, string> = new Map(); // "x,y,z" -> type
+    public data: Map<string, string> = new Map();
     public isDirty = true;
     public cx: number;
     public cz: number;
@@ -90,9 +90,7 @@ export class VoxelEngine {
     private renderer: THREE.WebGLRenderer;
     private raycaster: THREE.Raycaster;
     
-    // Chunk Management
     private chunks: Map<string, Chunk> = new Map();
-    private activeChunkIds: Set<string> = new Set();
     
     // Physics
     private velocity = new THREE.Vector3();
@@ -100,6 +98,7 @@ export class VoxelEngine {
     private canJump = false;
     private onGround = false;
     private prevTime = performance.now();
+    private frameCount = 0; // Throttle HUD
     
     public isRunning = false;
     public isPaused = false;
@@ -112,7 +111,6 @@ export class VoxelEngine {
     private perlin: Perlin;
     private worldType: 'default' | 'superflat';
     private matOpaque: THREE.MeshStandardMaterial;
-    private matTrans: THREE.MeshStandardMaterial;
 
     constructor(
         container: HTMLElement, 
@@ -126,10 +124,9 @@ export class VoxelEngine {
         this.worldType = settings.type;
         this.perlin = new Perlin(settings.seed);
 
-        // Setup Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB);
-        this.scene.fog = new THREE.Fog(0x87CEEB, 50, 400); // Occlusion approximation
+        this.scene.fog = new THREE.Fog(0x87CEEB, 50, 400);
 
         this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 80, 0);
@@ -139,17 +136,13 @@ export class VoxelEngine {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(this.renderer.domElement);
 
-        // Shared Materials (Vertex Colors)
         this.matOpaque = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
-        this.matTrans = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 0.7, roughness: 0.1 });
 
         this.setupLights();
         this.raycaster = new THREE.Raycaster();
 
-        // Initial Generation
         this.updateChunks();
 
-        // Listeners
         window.addEventListener('resize', this.onResize);
         document.addEventListener('keydown', this.onKeyDown);
         document.addEventListener('keyup', this.onKeyUp);
@@ -168,8 +161,6 @@ export class VoxelEngine {
         this.scene.add(sun);
     }
 
-    // --- CHUNK LOGIC ---
-
     private getChunkKey(cx: number, cz: number) { return `${cx},${cz}`; }
 
     private updateChunks() {
@@ -178,14 +169,12 @@ export class VoxelEngine {
 
         const neededChunks = new Set<string>();
 
-        // 1. Identify needed chunks
         for (let x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
             for (let z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
                 neededChunks.add(this.getChunkKey(playerCX + x, playerCZ + z));
             }
         }
 
-        // 2. Remove far chunks
         for (const [key, chunk] of this.chunks) {
             if (!neededChunks.has(key)) {
                 if (chunk.mesh) {
@@ -196,7 +185,6 @@ export class VoxelEngine {
             }
         }
 
-        // 3. Create/Gen new chunks
         neededChunks.forEach(key => {
             if (!this.chunks.has(key)) {
                 const [cx, cz] = key.split(',').map(Number);
@@ -206,7 +194,6 @@ export class VoxelEngine {
             }
         });
 
-        // 4. Re-mesh dirty chunks (Max 2 per frame to prevent stutter)
         let updates = 0;
         for (const chunk of this.chunks.values()) {
             if (chunk.isDirty && updates < 2) {
@@ -232,23 +219,17 @@ export class VoxelEngine {
                     chunk.setBlock(x, -2, z, 'dirt');
                     chunk.setBlock(x, -3, z, 'obsidian');
                 } else {
-                    // Simplex-like Noise
                     const n = this.perlin.noise(wx * 0.01, 0, wz * 0.01);
-                    h = Math.floor(n * 20); // Height variation
+                    h = Math.floor(n * 20); 
                     
                     chunk.setBlock(x, h, z, 'grass');
                     for (let d = 1; d <= 3; d++) chunk.setBlock(x, h - d, z, 'dirt');
                     chunk.setBlock(x, h - 4, z, 'stone');
 
-                    // Simple Tree
                     if (Math.random() < 0.01 && x > 2 && x < 13 && z > 2 && z < 13) {
                         const th = 4;
                         for(let i=1; i<=th; i++) chunk.setBlock(x, h+i, z, 'wood');
-                        for(let lx=-1; lx<=1; lx++) 
-                            for(let lz=-1; lz<=1; lz++) 
-                                for(let ly=0; ly<=1; ly++) 
-                                    if(lx!==0||lz!==0||ly!==0) chunk.setBlock(x+lx, h+th+ly-1, z+lz, 'leaves');
-                        chunk.setBlock(x, h+th+1, z, 'leaves');
+                        chunk.setBlock(x, h+th+1, z, 'leaves'); // Simplified tree
                     }
                 }
             }
@@ -266,12 +247,11 @@ export class VoxelEngine {
         const colors: number[] = [];
         const normals: number[] = [];
         const indices: number[] = [];
-        
         let vertCount = 0;
 
-        // Neighbor check helper (local coords)
         const isSolid = (x: number, y: number, z: number) => {
-            return chunk.getBlock(x, y, z) !== undefined && chunk.getBlock(x, y, z) !== 'water' && chunk.getBlock(x, y, z) !== 'leaves';
+            const b = chunk.getBlock(x, y, z);
+            return b !== undefined && b !== 'water' && b !== 'leaves';
         };
 
         chunk.data.forEach((type, key) => {
@@ -281,56 +261,26 @@ export class VoxelEngine {
             const wz = z * BLOCK_SIZE + chunk.cz * CHUNK_SIZE * BLOCK_SIZE;
             
             const col = COLORS[type] || COLORS.dirt;
-            const s = BLOCK_SIZE / 2;
+            const s = HALF_BLOCK; // 5
 
-            // Face generation data
             const faces = [
-                { // Right (+x)
-                    dir: [1, 0, 0], 
-                    pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ],
-                    check: [x+1, y, z]
-                },
-                { // Left (-x)
-                    dir: [-1, 0, 0], 
-                    pos: [ [-s, -s, -s], [-s, -s, s], [-s, s, s], [-s, s, -s] ],
-                    check: [x-1, y, z]
-                },
-                { // Top (+y)
-                    dir: [0, 1, 0], 
-                    pos: [ [-s, s, s], [s, s, s], [s, s, -s], [-s, s, -s] ],
-                    check: [x, y+1, z]
-                },
-                { // Bottom (-y)
-                    dir: [0, -1, 0], 
-                    pos: [ [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s] ],
-                    check: [x, y-1, z]
-                },
-                { // Front (+z)
-                    dir: [0, 0, 1], 
-                    pos: [ [-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s] ],
-                    check: [x, y, z+1]
-                },
-                { // Back (-z)
-                    dir: [0, 0, -1], 
-                    pos: [ [s, -s, -s], [-s, -s, -s], [-s, s, -s], [s, s, -s] ],
-                    check: [x, y, z-1]
-                }
+                { dir: [1, 0, 0], pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ], check: [x+1, y, z] },
+                { dir: [-1, 0, 0], pos: [ [-s, -s, -s], [-s, -s, s], [-s, s, s], [-s, s, -s] ], check: [x-1, y, z] },
+                { dir: [0, 1, 0], pos: [ [-s, s, s], [s, s, s], [s, s, -s], [-s, s, -s] ], check: [x, y+1, z] },
+                { dir: [0, -1, 0], pos: [ [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s] ], check: [x, y-1, z] },
+                { dir: [0, 0, 1], pos: [ [-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s] ], check: [x, y, z+1] },
+                { dir: [0, 0, -1], pos: [ [s, -s, -s], [-s, -s, -s], [-s, s, -s], [s, s, -s] ], check: [x, y, z-1] }
             ];
 
             for (const face of faces) {
-                // Face Culling: If neighbor exists and is solid, don't draw
-                // Note: Only culling internal chunk faces for simplicity. 
-                // Cross-chunk culling requires accessing neighbor chunks (possible optimization).
                 if (isSolid(face.check[0], face.check[1], face.check[2])) continue;
 
-                // Push Vertices
                 for (const v of face.pos) {
-                    vertices.push(wx + v[0], wy + v[1], wz + v[2]);
+                    // BUG FIX: Offset vertices by HALF_BLOCK so visual matches logical coordinate system (0..10)
+                    vertices.push(wx + v[0] + HALF_BLOCK, wy + v[1] + HALF_BLOCK, wz + v[2] + HALF_BLOCK);
                     colors.push(col.r, col.g, col.b);
                     normals.push(face.dir[0], face.dir[1], face.dir[2]);
                 }
-
-                // Push Indices (2 triangles)
                 const a = vertCount, b = vertCount + 1, c = vertCount + 2, d = vertCount + 3;
                 indices.push(a, b, c, a, c, d);
                 vertCount += 4;
@@ -345,21 +295,16 @@ export class VoxelEngine {
         geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
         geometry.setIndex(indices);
 
-        // Separate material based on content? (Simplified: everything uses opaque mat for perf, water uses transparent if we split meshes)
-        // For absolute speed: 1 mesh per chunk.
         chunk.mesh = new THREE.Mesh(geometry, this.matOpaque);
         this.scene.add(chunk.mesh);
         chunk.isDirty = false;
     }
-
-    // --- INTERACTION ---
 
     private connectToFirebase() {
         const q = collection(db, `${this.worldPath}/blocks`);
         onSnapshot(q, (snap) => {
             snap.docChanges().forEach(change => {
                 const d = change.doc.data();
-                // Map global coords to chunk coords
                 const x = d.x / BLOCK_SIZE;
                 const y = d.y / BLOCK_SIZE;
                 const z = d.z / BLOCK_SIZE;
@@ -372,19 +317,13 @@ export class VoxelEngine {
                 const key = this.getChunkKey(cx, cz);
                 let chunk = this.chunks.get(key);
                 
-                // If chunk exists in memory, update it
                 if (chunk) {
-                    if (change.type === 'removed') {
-                        // Reverting to natural state not supported in this simplified version
-                    } else {
-                        chunk.setBlock(lx, y, lz, d.type);
-                    }
+                    if (change.type === 'removed') { /* Restore natural? Skipped for MVP */ }
+                    else { chunk.setBlock(lx, y, lz, d.type); }
                 }
             });
         });
     }
-
-    // --- LOOP ---
 
     private animate = () => {
         if (!this.renderer) return; 
@@ -395,10 +334,15 @@ export class VoxelEngine {
             const delta = Math.min((time - this.prevTime) / 1000, 0.1);
             
             this.physics(delta);
-            this.updateChunks(); // Dynamic Loading
+            this.updateChunks(); 
             
+            // BUG FIX: Throttle HUD updates to prevent React state spam (Settings Freeze)
+            this.frameCount++;
+            if (this.frameCount % 15 === 0) { // Update every ~15 frames (4 times/sec)
+                this.updateHUD(Math.round(this.camera.position.x), Math.round(this.camera.position.y), Math.round(this.camera.position.z));
+            }
+
             this.prevTime = time;
-            this.updateHUD(Math.round(this.camera.position.x), Math.round(this.camera.position.y), Math.round(this.camera.position.z));
         } else {
             this.prevTime = performance.now();
         }
@@ -406,7 +350,6 @@ export class VoxelEngine {
     };
 
     private physics(delta: number) {
-        // Simplified Physics
         this.velocity.x *= 0.9;
         this.velocity.z *= 0.9;
         this.velocity.y -= 400 * delta;
@@ -426,7 +369,6 @@ export class VoxelEngine {
             this.velocity.addScaledVector(moveVec, speed * delta);
         }
 
-        // Apply
         this.camera.position.x += this.velocity.x * delta;
         this.checkCol('x');
         this.camera.position.z += this.velocity.z * delta;
@@ -439,13 +381,11 @@ export class VoxelEngine {
     }
 
     private checkCol(axis: 'x' | 'y' | 'z') {
-        // Raycast-based collision for chunk meshes is tricky.
-        // BoundingBox check against virtual block map is faster.
         const r = 3; 
         const minX = Math.floor((this.camera.position.x - r) / BLOCK_SIZE);
         const maxX = Math.floor((this.camera.position.x + r) / BLOCK_SIZE);
-        const minY = Math.floor((this.camera.position.y - 18) / BLOCK_SIZE); // feet
-        const maxY = Math.floor((this.camera.position.y + 2) / BLOCK_SIZE); // head
+        const minY = Math.floor((this.camera.position.y - 18) / BLOCK_SIZE); 
+        const maxY = Math.floor((this.camera.position.y + 2) / BLOCK_SIZE);
         const minZ = Math.floor((this.camera.position.z - r) / BLOCK_SIZE);
         const maxZ = Math.floor((this.camera.position.z + r) / BLOCK_SIZE);
 
@@ -459,11 +399,9 @@ export class VoxelEngine {
                     
                     const chunk = this.chunks.get(this.getChunkKey(cx, cz));
                     if(chunk && chunk.getBlock(lx, y, lz)) {
-                        // Collision detected
                         if(axis === 'y') {
                             if(this.velocity.y < 0) { this.onGround = true; this.canJump = true; }
                             this.velocity.y = 0;
-                            // Snap out
                             this.camera.position.y = Math.round(this.camera.position.y); 
                         } else {
                             this.velocity[axis] = 0;
@@ -476,7 +414,6 @@ export class VoxelEngine {
         }
     }
 
-    // --- EVENTS ---
     private onKeyDown = (e: KeyboardEvent) => {
         switch (e.code) {
             case 'KeyW': this.moveState.fwd = true; break;
@@ -506,7 +443,6 @@ export class VoxelEngine {
     private onMouseDown = (e: MouseEvent) => {
         if (!this.isRunning || this.isPaused) return;
         this.raycaster.setFromCamera(new THREE.Vector2(0,0), this.camera);
-        // Intersect against chunk meshes
         const meshes = Array.from(this.chunks.values()).map(c => c.mesh).filter((m): m is THREE.Mesh => m !== null);
         const hits = this.raycaster.intersectObjects(meshes);
         if(hits.length === 0 || hits[0].distance > 60) return;
@@ -514,7 +450,7 @@ export class VoxelEngine {
         const p = hits[0].point;
         const n = hits[0].face!.normal;
         
-        // Calculate block coord
+        // BUG FIX: With visual offset +HALF_BLOCK, standard floor logic now targets correctly
         const hitX = Math.floor((p.x - n.x * 0.1) / BLOCK_SIZE);
         const hitY = Math.floor((p.y - n.y * 0.1) / BLOCK_SIZE);
         const hitZ = Math.floor((p.z - n.z * 0.1) / BLOCK_SIZE);
@@ -526,10 +462,11 @@ export class VoxelEngine {
             const placeY = Math.floor((p.y + n.y * 0.1) / BLOCK_SIZE);
             const placeZ = Math.floor((p.z + n.z * 0.1) / BLOCK_SIZE);
             
-            // Player collision check
             const px = this.camera.position.x / BLOCK_SIZE;
             const pz = this.camera.position.z / BLOCK_SIZE;
-            if(Math.abs(placeX - px) < 1 && Math.abs(placeZ - pz) < 1 && placeY < (this.camera.position.y/BLOCK_SIZE)+1 && placeY > (this.camera.position.y/BLOCK_SIZE)-2) return;
+            const py = this.camera.position.y / BLOCK_SIZE;
+            // Prevent placing inside player (simple AABB)
+            if(Math.abs(placeX - px) < 0.8 && Math.abs(placeZ - pz) < 0.8 && placeY < py + 0.5 && placeY > py - 1.8) return;
 
             const selectedBlock = (window as any).__SELECTED_BLOCK__ || 'grass';
             this.modifyBlock(placeX, placeY, placeZ, selectedBlock);
@@ -537,13 +474,11 @@ export class VoxelEngine {
     }
 
     private modifyBlock(x: number, y: number, z: number, type: string) {
-        // Save to DB
         const bid = `${x*BLOCK_SIZE}_${y*BLOCK_SIZE}_${z*BLOCK_SIZE}`;
         setDoc(doc(db, `${this.worldPath}/blocks`, bid), { 
             x: x*BLOCK_SIZE, y: y*BLOCK_SIZE, z: z*BLOCK_SIZE, type 
         });
 
-        // Update local chunk immediately for responsiveness
         const cx = Math.floor(x / CHUNK_SIZE);
         const cz = Math.floor(z / CHUNK_SIZE);
         const lx = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
@@ -553,7 +488,6 @@ export class VoxelEngine {
         const chunk = this.chunks.get(key);
         if(chunk) {
             chunk.setBlock(lx, y, lz, type);
-            // Also update neighbor chunks if on border? (Skipped for brevity)
         }
     }
 
@@ -566,7 +500,6 @@ export class VoxelEngine {
     public setSensitivity(val: number) { this.sensitivity = val; }
 
     public dispose() {
-        // Cleanup
         this.chunks.forEach(c => {
             if(c.mesh) { this.scene.remove(c.mesh); c.mesh.geometry.dispose(); }
         });
