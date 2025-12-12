@@ -5,6 +5,7 @@ import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { collection, query, orderBy, getDocs, setDoc, doc } from "firebase/firestore";
 import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
+import PanoramaBackground from "@/components/PanoramaBackground";
 import styles from "@/styles/Home.module.css";
 
 const BLOCK_SIZE = 10;
@@ -168,7 +169,7 @@ export default function Home() {
         <div className={styles.fullScreen}>
           
           {/* BACKGROUND LAYERS */}
-          <div className={styles.panorama}></div>
+          <PanoramaBackground /> 
           <div className={styles.vignette}></div>
 
           {/* CONTENT */}
@@ -227,7 +228,7 @@ export default function Home() {
       {/* --- WORLD SELECT --- */}
       {view === 'worlds' && (
         <div className={styles.fullScreen}>
-          <div className={styles.panorama}></div>
+          <PanoramaBackground /> 
           <div className={styles.vignette}></div>
           
           <div className={styles.menuLayer}>
