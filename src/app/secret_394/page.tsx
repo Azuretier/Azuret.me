@@ -16,7 +16,12 @@ const COLORS: Record<string, string> = {
 const HOTBAR_ITEMS: BlockType[] = ['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian'];
 
 const FIXED_SPLASH = "Music by C418!";
-const TIPS = ["Make torches!", "Don't dig down!", "Crops need water."];
+const TIPS = [
+  "Make some torches to light up areas at night.", "Obsidian needs a diamond pickaxe.",
+  "Press 'E' to view inventory.", "Don't dig straight down!",
+  "Water and lava are dangerous.", "Crops grow faster near water.",
+  "Wolves can be tamed with bones.", "Shift-click to move items quickly."
+];
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -28,9 +33,10 @@ export default function Home() {
   const [newWorldType, setNewWorldType] = useState<0 | 1>(0);
 
   // Loading
-  const [loadingStatus, setLoadingStatus] = useState("");
-  const [loadingSub, setLoadingSub] = useState("");
+  const [loadingStatus, setLoadingStatus] = useState("Initializing server");
+  const [loadingSub, setLoadingSub] = useState("Loading spawn area...");
   const [progress, setProgress] = useState(0);
+  const [currentTip, setCurrentTip] = useState("");
 
   // Game & Settings
   const [showPreGame, setShowPreGame] = useState(false);
@@ -71,10 +77,17 @@ export default function Home() {
   }, [sensitivity]);
 
   const startLoadingSequence = (callback: () => void) => {
-    setView('loading'); setProgress(0); setLoadingStatus("Initializing");
-    setTimeout(() => { setProgress(50); setLoadingStatus("Generating Terrain"); }, 1000);
-    setTimeout(() => { setProgress(100); setLoadingStatus("Done"); }, 2000);
-    setTimeout(callback, 2500);
+    setView('loading');
+    setProgress(0);
+    setCurrentTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
+    setLoadingStatus("Initializing server");
+    setLoadingSub("Connecting to database...");
+
+    setTimeout(() => { setProgress(20); setLoadingSub("Finding Seed for the World Generator..."); }, 500);
+    setTimeout(() => { setProgress(50); setLoadingStatus("Generating World"); setLoadingSub("Building terrain..."); }, 1500);
+    setTimeout(() => { setProgress(80); setLoadingSub("Spawning entities..."); }, 3000);
+    setTimeout(() => { setProgress(100); setLoadingStatus("Loading"); setLoadingSub("Finalizing..."); }, 4500);
+    setTimeout(() => { callback(); }, 5000);
   };
 
   const fetchWorlds = async () => {
