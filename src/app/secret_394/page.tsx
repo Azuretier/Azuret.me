@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
-import { collection, query, orderBy, getDocs, setDoc, doc, getDoc } from "firebase/firestore"; // Added getDoc
+import { collection, query, orderBy, getDocs, setDoc, doc, getDoc } from "firebase/firestore";
 import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
 import PanoramaBackground from "@/components/PanoramaBackground";
 import styles from "@/styles/Home.module.css";
@@ -30,8 +30,11 @@ export default function Home() {
   const [worlds, setWorlds] = useState<any[]>([]);
   const [selectedWorldId, setSelectedWorldId] = useState<string | null>(null);
   const [modalCreate, setModalCreate] = useState(false);
-  const [newWorldName, setNewWorldName] = useState("New World");
   
+  // World Creation State
+  const [newWorldName, setNewWorldName] = useState("New World");
+  const [newWorldType, setNewWorldType] = useState<0 | 1>(0); // 0 = Default, 1 = Superflat
+
   // Loading
   const [loadingStatus, setLoadingStatus] = useState("Initializing server");
   const [loadingSub, setLoadingSub] = useState("Loading spawn area...");
@@ -51,7 +54,6 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
 
-  // 1. Auth & Login
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (u) setUser(u);
@@ -60,7 +62,7 @@ export default function Home() {
     return () => unsub();
   }, []);
 
-  // 2. Load Options from Firestore
+  // Load Settings
   useEffect(() => {
     if (!user) return;
     const fetchOptions = async () => {
@@ -78,23 +80,17 @@ export default function Home() {
     fetchOptions();
   }, [user]);
 
-  // 3. Auto-Save Options to Firestore (Debounced)
+  // Save Settings
   useEffect(() => {
     if (!user) return;
-    
-    // We debounce the save so dragging the slider doesn't spam Firestore
     const saveTimer = setTimeout(() => {
         const optionsPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`;
-        setDoc(doc(db, optionsPath), { 
-            sensitivity,
-            updatedAt: Date.now() 
-        }, { merge: true }).catch(err => console.error("Save failed", err));
+        setDoc(doc(db, optionsPath), { sensitivity, updatedAt: Date.now() }, { merge: true })
+            .catch(err => console.error("Save failed", err));
     }, 1000);
-
     return () => clearTimeout(saveTimer);
   }, [sensitivity, user]);
 
-  // 4. Update Engine Sensitivity Live
   useEffect(() => {
     if (engineRef.current) {
         engineRef.current.setSensitivity(sensitivity / 10000);
@@ -112,7 +108,6 @@ export default function Home() {
     setTimeout(() => { setProgress(50); setLoadingStatus("Generating World"); setLoadingSub("Building terrain..."); }, 1500);
     setTimeout(() => { setProgress(80); setLoadingSub("Spawning entities..."); }, 3000);
     setTimeout(() => { setProgress(100); setLoadingStatus("Loading"); setLoadingSub("Finalizing..."); }, 4500);
-    
     setTimeout(() => { callback(); }, 5000);
   };
 
@@ -129,19 +124,28 @@ export default function Home() {
   const createWorld = async () => {
     if (!user || !newWorldName.trim()) return;
     setModalCreate(false);
+    
     startLoadingSequence(async () => {
         try {
             const newId = `world_${Date.now()}`;
             const basePath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`;
-            await setDoc(doc(db, basePath, newId), { name: newWorldName, createdBy: user.uid, createdAt: Date.now() });
-            const promises = [];
-            for(let x=-8; x<8; x++){
-                for(let z=-8; z<8; z++){
-                    const bid = `${x}_0_${z}`;
-                    promises.push(setDoc(doc(db, `${basePath}/${newId}/blocks`, bid), { x: x*BLOCK_SIZE, y: -BLOCK_SIZE, z: z*BLOCK_SIZE, type: 'grass' }));
-                }
-            }
-            loadGame(newId, true); 
+            
+            // 1. Generate Seed
+            const seed = Math.floor(Math.random() * 65536);
+            const typeStr = newWorldType === 0 ? 'default' : 'superflat';
+
+            // 2. Save Metadata ONLY (No blocks)
+            // World generation is now handled procedurally by the engine based on seed
+            await setDoc(doc(db, basePath, newId), { 
+                name: newWorldName, 
+                createdBy: user.uid, 
+                createdAt: Date.now(),
+                seed: seed,
+                type: typeStr
+            });
+
+            // 3. Load
+            loadGame(newId, true, { seed, type: typeStr }); 
         } catch (e: any) {
             alert("Error: " + e.message);
             setView('worlds');
@@ -149,23 +153,45 @@ export default function Home() {
     });
   };
 
-  const loadGame = (worldId: string, skipLoading = false) => {
+  const loadGame = async (worldId: string, skipLoading = false, directParams?: any) => {
     if (!user) return;
-    const initEngine = () => {
+
+    // Helper to start engine
+    const initEngine = (params: { seed: number, type: 'default' | 'superflat' }) => {
         if (engineRef.current) engineRef.current.dispose();
         const worldPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}`;
+        
         if (containerRef.current) {
-            engineRef.current = new VoxelEngine(containerRef.current, worldPath, (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); });
+            engineRef.current = new VoxelEngine(
+                containerRef.current, 
+                worldPath, 
+                (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); },
+                params // Pass seed and type
+            );
             (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
-            // Initialize sensitivity
             engineRef.current.setSensitivity(sensitivity / 10000);
+            
             setView('game');
             setShowPreGame(true);
             setPaused(false);
-            setPauseMenuState('main'); // Reset menu
+            setPauseMenuState('main');
         }
     };
-    if (skipLoading) initEngine(); else startLoadingSequence(initEngine);
+
+    if (directParams) {
+        if (skipLoading) initEngine(directParams);
+        else startLoadingSequence(() => initEngine(directParams));
+    } else {
+        // Fetch params from DB if not provided
+        const worldPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds`;
+        const snap = await getDoc(doc(db, worldPath, worldId));
+        if(!snap.exists()) return;
+        const d = snap.data();
+        const params = { seed: d.seed || 0, type: d.type || 'default' };
+        
+        if (skipLoading) initEngine(params);
+        else startLoadingSequence(() => initEngine(params));
+    }
   };
 
   const enterWorld = () => {
@@ -187,7 +213,7 @@ export default function Home() {
       } else {
         if (view === 'game' && !showPreGame) {
           setPaused(true);
-          setPauseMenuState('main'); // Always reset to main menu on pause
+          setPauseMenuState('main');
           if (engineRef.current) engineRef.current.isPaused = true;
         }
       }
@@ -208,7 +234,6 @@ export default function Home() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
-
 
   return (
     <main className={styles.fullScreen}>
@@ -234,18 +259,10 @@ export default function Home() {
               <button className={styles.switchBtn}>Achievements</button>
               <button className={styles.switchBtn}>Help & Options</button>
               <button className={styles.switchBtn}>Minecraft Store</button>
-              <button className={`${styles.switchBtn} ${styles.downloadBtn}`}>
-                  Download the latest version of Minecraft<br/>for FREE!
-              </button>
             </div>
             <div className={styles.footerBar}>
               <div className={styles.footerItem}>
-                <div className={styles.btnIcon} style={{background:'#444', color:'#fff'}}>A</div>
-                <span>Select</span>
-              </div>
-              <div className={styles.footerItem}>
-                <div className={styles.btnIcon} style={{background:'#444', color:'#fff'}}>Y</div>
-                <span>Change Network Mode</span>
+                <div className={styles.btnIcon}>A</div><span>Select</span>
               </div>
             </div>
           </div>
@@ -275,10 +292,8 @@ export default function Home() {
           <div className={styles.menuLayer}>
             <h1 className={styles.logoMain} style={{fontSize: '4rem', marginTop: 20}}>SELECT WORLD</h1>
             <div className={styles.listContainer}>
-              {worlds.length === 0 && <div style={{textAlign:'center', marginTop: 100, color:'#888', fontFamily: 'var(--font-pixel)', fontSize: '1.5rem'}}>No worlds created yet.</div>}
               {worlds.map(w => (
-                <div key={w.id} 
-                    onClick={() => setSelectedWorldId(w.id)}
+                <div key={w.id} onClick={() => setSelectedWorldId(w.id)}
                     className={`${styles.worldRow} ${selectedWorldId === w.id ? styles.worldRowSelected : ''}`}>
                   <span>{w.name}</span>
                   <span style={{fontSize: '0.8rem', color:'#aaa'}}>{new Date(w.createdAt).toLocaleDateString()}</span>
@@ -294,12 +309,25 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- CREATE MODAL --- */}
+      {/* --- CREATE MODAL (UPDATED) --- */}
       {modalCreate && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
           <div className={styles.modalBox}>
-            <h2 style={{fontSize: '2rem', marginBottom: '1rem'}}>NAME YOUR WORLD</h2>
-            <input value={newWorldName} onChange={(e) => setNewWorldName(e.target.value)} className={styles.input} />
+            <h2 style={{fontSize: '2rem', marginBottom: '1rem'}}>CREATE NEW WORLD</h2>
+            
+            <input value={newWorldName} onChange={(e) => setNewWorldName(e.target.value)} className={styles.input} placeholder="World Name" />
+
+            {/* GENERATION SLIDER */}
+            <div className={styles.sliderContainer} style={{width: '95%', marginBottom: 30}}>
+                <input type="range" min="0" max="1" step="1"
+                    value={newWorldType} 
+                    onChange={(e) => setNewWorldType(parseInt(e.target.value) as 0|1)} 
+                    className={styles.sliderInput} />
+                <div className={styles.sliderLabel}>
+                    Type: {newWorldType === 0 ? 'DEFAULT' : 'SUPERFLAT'}
+                </div>
+            </div>
+
             <div className={styles.row}>
               <button onClick={createWorld} className={styles.switchBtn} style={{width:'150px'}}>Create</button>
               <button onClick={() => setModalCreate(false)} className={styles.switchBtn} style={{width:'150px'}}>Cancel</button>
@@ -312,47 +340,7 @@ export default function Home() {
       {view === 'game' && showPreGame && (
         <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
           <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', color: '#4CAF50', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>WORLD READY!</h1>
-          <p style={{color: '#ddd', marginBottom: '30px', fontFamily: 'monospace'}}>Press A to Start</p>
           <button onClick={enterWorld} className={styles.switchBtn} style={{width: '300px'}}>START GAME</button>
-          <button onClick={quitGame} className={styles.switchBtn} style={{width: '300px', marginTop: '10px'}}>EXIT</button>
-        </div>
-      )}
-
-      {/* --- PAUSE MENU (LAYERED) --- */}
-      {view === 'game' && paused && !showPreGame && (
-        <div className={`${styles.fullScreen} ${styles.flexCenter} ${styles.bgOverlay}`}>
-          
-          <h1 style={{fontFamily: 'var(--font-pixel)', fontSize: '4rem', marginBottom: '1rem', textShadow: '2px 2px 0 #000'}}>
-            {pauseMenuState === 'main' ? 'GAME PAUSED' : 'OPTIONS'}
-          </h1>
-
-          <div className={styles.menuContainer}>
-            
-            {/* LAYER 1: MAIN MENU */}
-            {pauseMenuState === 'main' && (
-                <>
-                    <button onClick={() => document.body.requestPointerLock()} className={styles.switchBtn}>Resume Game</button>
-                    <button onClick={() => setPauseMenuState('options')} className={styles.switchBtn}>Options</button>
-                    <button onClick={quitGame} className={styles.switchBtn}>Save & Quit</button>
-                </>
-            )}
-
-            {/* LAYER 2: OPTIONS MENU */}
-            {pauseMenuState === 'options' && (
-                <>
-                    {/* CUSTOM MINECRAFT STYLE SLIDER */}
-                    <div className={styles.sliderContainer}>
-                        <input type="range" min="1" max="200" value={sensitivity} 
-                            onChange={(e) => setSensitivity(parseInt(e.target.value))} 
-                            className={styles.sliderInput} />
-                        <div className={styles.sliderLabel}>Sensitivity: {sensitivity}%</div>
-                    </div>
-
-                    <button onClick={() => setPauseMenuState('main')} className={styles.switchBtn}>Back</button>
-                </>
-            )}
-
-          </div>
         </div>
       )}
 
