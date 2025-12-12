@@ -18,30 +18,21 @@ export default function PanoramaBackground() {
     renderer.setPixelRatio(window.devicePixelRatio);
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. Geometry
+    // 2. Geometry (Inverted Sphere)
     const geometry = new THREE.SphereGeometry(500, 60, 40);
     geometry.scale(-1, 1, 1); // Invert so we see inside
 
-    // 3. Load Texture with Debugging
+    // 3. Load Texture (Using External URL to fix 404)
     const textureLoader = new THREE.TextureLoader();
     
-    // NOTE: In Next.js, "public/media/image.png" is accessed via "/media/image.png"
+    // FALLBACK: Use this reliable external Minecraft panorama
+    const textureURL = 'https://minecraft.wiki/w/Legacy_Console_Edition_panoramas#/media/File:TU46_Panorama_Background_S.png';
+
     const texture = textureLoader.load(
-      '/media/panorama.png', 
-      // On Success
-      () => {
-        console.log("✅ Background Texture loaded successfully.");
-      },
-      // On Progress
+      textureURL,
+      () => console.log("✅ Texture loaded successfully!"),
       undefined,
-      // On Error
-      (err) => {
-        console.error("❌ FAILED to load texture. Check these things:");
-        console.error("1. Is the file exactly at: /public/media/panorama.png?");
-        console.error("2. Is the filename lowercase?");
-        console.error("3. Did you restart the dev server?");
-        console.error("Error Details:", err);
-      }
+      (err) => console.error("❌ Texture failed again:", err)
     );
     
     texture.minFilter = THREE.LinearFilter;
