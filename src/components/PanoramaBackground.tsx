@@ -18,18 +18,33 @@ export default function PanoramaBackground() {
     renderer.setPixelRatio(window.devicePixelRatio);
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. Create Geometry (Inverted Sphere)
-    // This creates a ball around the camera, and we paste the image on the inside.
+    // 2. Geometry
     const geometry = new THREE.SphereGeometry(500, 60, 40);
-    // Invert the geometry so the image is visible from the inside
-    geometry.scale(-1, 1, 1);
+    geometry.scale(-1, 1, 1); // Invert so we see inside
 
-    // 3. Load Texture
+    // 3. Load Texture with Debugging
     const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load('/media/panorama.png');
     
-    // Fixes the "Mipmap" errors for non-power-of-two images
-    texture.minFilter = THREE.LinearFilter; 
+    // NOTE: In Next.js, "public/media/image.png" is accessed via "/media/image.png"
+    const texture = textureLoader.load(
+      '/media/panorama.png', 
+      // On Success
+      () => {
+        console.log("✅ Background Texture loaded successfully.");
+      },
+      // On Progress
+      undefined,
+      // On Error
+      (err) => {
+        console.error("❌ FAILED to load texture. Check these things:");
+        console.error("1. Is the file exactly at: /public/media/panorama.png?");
+        console.error("2. Is the filename lowercase?");
+        console.error("3. Did you restart the dev server?");
+        console.error("Error Details:", err);
+      }
+    );
+    
+    texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.generateMipmaps = false; 
 
@@ -37,16 +52,15 @@ export default function PanoramaBackground() {
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    // 4. Animation Loop (Slow Rotation)
+    // 4. Animation
     const animate = () => {
       requestAnimationFrame(animate);
-      // Rotate the sphere slowly to simulate camera movement
       mesh.rotation.y += 0.0006; 
       renderer.render(scene, camera);
     };
     animate();
 
-    // 5. Handle Resize
+    // 5. Resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -54,7 +68,6 @@ export default function PanoramaBackground() {
     };
     window.addEventListener("resize", handleResize);
 
-    // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
       if (mountRef.current) mountRef.current.removeChild(renderer.domElement);
@@ -69,13 +82,7 @@ export default function PanoramaBackground() {
     <div 
       ref={mountRef} 
       style={{ 
-        position: 'absolute', 
-        top: 0, 
-        left: 0, 
-        width: '100%', 
-        height: '100%', 
-        zIndex: 0,
-        // The Console Edition Blur Effect
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0,
         filter: 'blur(4px) scale(1.02)' 
       }} 
     />
