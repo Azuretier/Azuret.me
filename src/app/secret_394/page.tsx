@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
-import { collection, query, orderBy, getDocs, setDoc, doc } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, setDoc, doc, getDoc } from "firebase/firestore"; // Added getDoc
 import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
 import PanoramaBackground from "@/components/PanoramaBackground";
 import styles from "@/styles/Home.module.css";
@@ -51,6 +51,7 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
 
+  // 1. Auth & Login
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (u) setUser(u);
@@ -59,7 +60,41 @@ export default function Home() {
     return () => unsub();
   }, []);
 
-  // Update Sensitivity Live
+  // 2. Load Options from Firestore
+  useEffect(() => {
+    if (!user) return;
+    const fetchOptions = async () => {
+        try {
+            const optionsPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`;
+            const snap = await getDoc(doc(db, optionsPath));
+            if (snap.exists()) {
+                const data = snap.data();
+                if (data.sensitivity) setSensitivity(data.sensitivity);
+            }
+        } catch (error) {
+            console.error("Error loading options:", error);
+        }
+    };
+    fetchOptions();
+  }, [user]);
+
+  // 3. Auto-Save Options to Firestore (Debounced)
+  useEffect(() => {
+    if (!user) return;
+    
+    // We debounce the save so dragging the slider doesn't spam Firestore
+    const saveTimer = setTimeout(() => {
+        const optionsPath = `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/settings/options`;
+        setDoc(doc(db, optionsPath), { 
+            sensitivity,
+            updatedAt: Date.now() 
+        }, { merge: true }).catch(err => console.error("Save failed", err));
+    }, 1000);
+
+    return () => clearTimeout(saveTimer);
+  }, [sensitivity, user]);
+
+  // 4. Update Engine Sensitivity Live
   useEffect(() => {
     if (engineRef.current) {
         engineRef.current.setSensitivity(sensitivity / 10000);
