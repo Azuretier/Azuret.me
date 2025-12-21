@@ -3,8 +3,8 @@
 // for a commit for vercel api.  
 import { useEffect, useState } from "react"
 import { motion, animate, AnimatePresence } from "framer-motion"
-import { ThemeToggle } from '@/components/sunmoon';
-import RainEffect from '@/components/realistic-rain2';
+import { ThemeToggle } from '@/components/main/sunmoon';
+import RainEffect from '@/components/main/realistic-rain';
 import {
   FaBirthdayCake,
   FaUserGraduate,
@@ -14,8 +14,6 @@ import {
   FaYoutube,
 } from "react-icons/fa"
 import { FaXTwitter } from "react-icons/fa6";
-import Image from "next/image"
-//import { FadeUpStagger} from "@/components/animation";
 
 const Main = () => {
   const texts = [
