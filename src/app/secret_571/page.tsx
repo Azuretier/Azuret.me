@@ -13,7 +13,14 @@ const COLORS: Record<string, string> = {
   wood: '#4e342e', brick: '#8d6e63', leaves: '#2e7d32',
   water: '#40a4df', obsidian: '#1a1a1a', sand: '#c2b280'
 };
-const HOTBAR_ITEMS: BlockType[] = ['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian', 'sand'];
+
+const ALL_BLOCKS: BlockType[] = [
+  'grass', 'dirt', 'stone', 'wood', 
+  'brick', 'leaves', 'water', 'obsidian'
+];
+
+
+const DEFAULT_HOTBAR: BlockType[] = ['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian', 'sand'];
 
 const FIXED_SPLASH = "Music by C418!";
 const TIPS = [
@@ -78,7 +85,7 @@ export default function Home() {
     if (!user || !selectedWorldId) return;
     
     try {
-        await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${selectedWorldId}`), { 
+        await setDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${selectedWorldId}/players/${user.uid}`), { 
             inventory, 
             hotbar, 
             updatedAt: Date.now() 
@@ -167,7 +174,7 @@ export default function Home() {
   const loadGame = async (worldId: string, skipLoading = false, directParams?: any) => {
     if (!user) return;
     setSelectedWorldId(worldId);
-    const init = (params: any) => {
+    const init = async (params: any) => {
         if (engineRef.current) engineRef.current.dispose();
         if (containerRef.current) {
             engineRef.current = new VoxelEngine(
@@ -176,7 +183,20 @@ export default function Home() {
                 (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); }, // This is throttled in Engine now
                 params
             );
-            (window as any).__SELECTED_BLOCK__ = hotbar[selectedSlot];
+            // [1] LOAD HAPPENS HERE ------------------------------
+            // We construct the path to the specific world's player data
+            const playerDocRef = doc(db, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}/users/${user.uid}/worlds/${worldId}/players/${user.uid}`);
+            
+            // We await the data fetch BEFORE starting the game engine
+            const playerSnap = await getDoc(playerDocRef);
+            
+            if (playerSnap.exists() && playerSnap.data().hotbar) {
+                setHotbar(playerSnap.data().hotbar); // <--- Restore saved inventory
+            } else {
+                setHotbar(DEFAULT_HOTBAR); // <--- Use default for new/broken worlds
+            }
+            // ----------------------------------------------------
+            
             engineRef.current.setSensitivity(sensitivity / 10000);
             setView('game'); setShowPreGame(true); setPaused(false); setPauseMenuState('main');
         }
