@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
+import { createTextureAtlas, BLOCK_IDS, TOTAL_BLOCKS } from './TextureUtils';
 
-// Post Processing Imports
+// Post Processing
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -15,24 +16,10 @@ const HALF_BLOCK = BLOCK_SIZE / 2;
 const CHUNK_SIZE = 16;
 const RENDER_DISTANCE = 4; 
 
-// Player Dimensions
 const PLAYER_WIDTH = 0.6 * BLOCK_SIZE; 
 const PLAYER_HEIGHT = 1.8 * BLOCK_SIZE; 
 const PLAYER_HALF_W = PLAYER_WIDTH / 2;
 const EYE_HEIGHT = 1.6 * BLOCK_SIZE; 
-
-const COLORS: Record<string, { r: number, g: number, b: number }> = {
-    grass: { r: 0.2, g: 0.5, b: 0.2 },
-    dirt: { r: 0.4, g: 0.3, b: 0.2 },
-    stone: { r: 0.5, g: 0.5, b: 0.5 },
-    wood: { r: 0.4, g: 0.3, b: 0.1 },
-    brick: { r: 0.6, g: 0.3, b: 0.2 },
-    leaves: { r: 0.1, g: 0.4, b: 0.1 },
-    water: { r: 0.2, g: 0.4, b: 0.8 },
-    obsidian: { r: 0.1, g: 0.0, b: 0.2 },
-    sand: { r: 0.8, g: 0.8, b: 0.5 },
-    air: { r: 0, g: 0, b: 0 }
-};
 
 class Perlin {
     private p: number[] = [];
@@ -112,7 +99,7 @@ export class VoxelEngine {
     private updateHUD: (x: number, y: number, z: number) => void;
     private perlin: Perlin;
     private worldType: 'default' | 'superflat';
-    private matOpaque: THREE.MeshStandardMaterial;
+    private matAtlas: THREE.MeshStandardMaterial;
 
     constructor(
         container: HTMLElement, 
@@ -126,16 +113,13 @@ export class VoxelEngine {
         this.worldType = settings.type;
         this.perlin = new Perlin(settings.seed);
 
-        // 1. Scene Setup
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB);
         this.scene.fog = new THREE.Fog(0x87CEEB, 50, 400);
 
-        // 2. Camera Setup (Init only once!)
         this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 100, 0); // Start high to avoid floor collision
+        this.camera.position.set(0, 100, 0);
 
-        // 3. Renderer Setup
         this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -143,7 +127,6 @@ export class VoxelEngine {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(this.renderer.domElement);
 
-        // 4. Post-Processing
         this.composer = new EffectComposer(this.renderer);
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
@@ -154,22 +137,21 @@ export class VoxelEngine {
         const outputPass = new OutputPass();
         this.composer.addPass(outputPass);
 
-        // 5. Materials & Lights
-        this.matOpaque = new THREE.MeshStandardMaterial({ 
-            vertexColors: true, 
+        // --- NEW MATERIAL: Texture Atlas ---
+        const texture = createTextureAtlas();
+        this.matAtlas = new THREE.MeshStandardMaterial({ 
+            map: texture,
             roughness: 0.9, 
-            metalness: 0.1 
+            metalness: 0.1,
+            vertexColors: false // Disable vertex colors, use texture map
         });
 
         this.setupLights();
         this.setupReferenceObject();
-        
         this.raycaster = new THREE.Raycaster();
         
-        // 6. Initial Generation
         this.updateChunks(true); 
 
-        // 7. Event Listeners
         window.addEventListener('resize', this.onResize);
         document.addEventListener('keydown', this.onKeyDown);
         document.addEventListener('keyup', this.onKeyUp);
@@ -189,7 +171,7 @@ export class VoxelEngine {
     }
 
     private setupReferenceObject() {
-        // Bedrock block at 0, -10, 0 so you have something to stand on if chunks lag
+        // Bedrock block
         const geo = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
         const mat = new THREE.MeshStandardMaterial({ color: 0x333333 });
         const mesh = new THREE.Mesh(geo, mat);
@@ -276,7 +258,7 @@ export class VoxelEngine {
     private buildChunkMesh(chunk: Chunk) {
         if (chunk.mesh) { this.scene.remove(chunk.mesh); chunk.mesh.geometry.dispose(); chunk.mesh = null; }
         const vertices: number[] = [];
-        const colors: number[] = [];
+        const uvs: number[] = []; // NEW: UV Coordinates
         const normals: number[] = [];
         const indices: number[] = [];
         let vertCount = 0;
@@ -292,7 +274,11 @@ export class VoxelEngine {
             const wy = y * BLOCK_SIZE;
             const wz = z * BLOCK_SIZE + chunk.cz * CHUNK_SIZE * BLOCK_SIZE;
             
-            const col = COLORS[type] || COLORS.dirt;
+            // --- UV MAPPING LOGIC ---
+            const textureIndex = BLOCK_IDS[type] || BLOCK_IDS['dirt'];
+            const uStart = textureIndex / TOTAL_BLOCKS;
+            const uEnd = (textureIndex + 1) / TOTAL_BLOCKS;
+            
             const s = HALF_BLOCK;
             const faces = [
                 { dir: [1, 0, 0], pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ], check: [x+1, y, z] },
@@ -302,13 +288,21 @@ export class VoxelEngine {
                 { dir: [0, 0, 1], pos: [ [-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s] ], check: [x, y, z+1] },
                 { dir: [0, 0, -1], pos: [ [s, -s, -s], [-s, -s, -s], [-s, s, -s], [s, s, -s] ], check: [x, y, z-1] }
             ];
+
             for (const face of faces) {
                 if (isSolid(face.check[0], face.check[1], face.check[2])) continue;
                 for (const v of face.pos) {
                     vertices.push(wx + v[0] + HALF_BLOCK, wy + v[1] + HALF_BLOCK, wz + v[2] + HALF_BLOCK);
-                    colors.push(col.r, col.g, col.b);
                     normals.push(face.dir[0], face.dir[1], face.dir[2]);
                 }
+                
+                // UVs for this face (Standard 0-1 square, mapped to Atlas slice)
+                // Order: Bottom Left, Bottom Right, Top Right, Top Left
+                uvs.push(uStart, 0); // 0,0
+                uvs.push(uEnd, 0);   // 1,0
+                uvs.push(uEnd, 1);   // 1,1
+                uvs.push(uStart, 1); // 0,1
+
                 const a = vertCount, b = vertCount + 1, c = vertCount + 2, d = vertCount + 3;
                 indices.push(a, b, c, a, c, d);
                 vertCount += 4;
@@ -319,11 +313,12 @@ export class VoxelEngine {
         
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); // Use UVs
         geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
         geometry.setIndex(indices);
         
-        chunk.mesh = new THREE.Mesh(geometry, this.matOpaque);
+        // Use the Texture Atlas Material
+        chunk.mesh = new THREE.Mesh(geometry, this.matAtlas);
         chunk.mesh.castShadow = true;
         chunk.mesh.receiveShadow = true;
         
@@ -482,7 +477,7 @@ export class VoxelEngine {
                                         this.velocity.z = 0;
                                     }
                                 }
-                                return; 
+                                return;
                             }
                         }
                     }
