@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { collection, query, orderBy, getDocs, setDoc, doc, getDoc } from "firebase/firestore";
-import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
+import { VoxelEngine, BlockType } from "@/lib/MNSW/VoxelEngine";
 import PanoramaBackground from "@/components/MNSW/PanoramaBackground";
 import styles from "@/styles/Home.module.css";
 
@@ -18,7 +18,6 @@ const ALL_BLOCKS: BlockType[] = [
   'grass', 'dirt', 'stone', 'wood', 
   'brick', 'leaves', 'water', 'obsidian'
 ];
-
 
 const DEFAULT_HOTBAR: BlockType[] = ['grass', 'dirt', 'stone', 'wood', 'brick', 'leaves', 'water', 'obsidian', 'sand'];
 

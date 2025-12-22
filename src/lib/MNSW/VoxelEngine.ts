@@ -1,6 +1,13 @@
 import * as THREE from 'three';
-import { db } from './firebase';
+import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
+import { createProceduralTexture } from './TextureUtils';
+
+// Import Post Processing
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
 export type BlockType = 'grass' | 'dirt' | 'stone' | 'wood' | 'brick' | 'leaves' | 'water' | 'obsidian' | 'sand' | 'air';
 
@@ -15,17 +22,37 @@ const PLAYER_HEIGHT = 1.8 * BLOCK_SIZE; // 1.8 blocks high
 const PLAYER_HALF_W = PLAYER_WIDTH / 2;
 const EYE_HEIGHT = 1.6 * BLOCK_SIZE; // Eyes are near top
 
-const COLORS: Record<string, { r: number, g: number, b: number }> = {
-    grass: { r: 0.34, g: 0.49, b: 0.27 },
-    dirt: { r: 0.36, g: 0.25, b: 0.22 },
-    stone: { r: 0.46, g: 0.46, b: 0.46 },
-    wood: { r: 0.31, g: 0.20, b: 0.18 },
-    brick: { r: 0.55, g: 0.43, b: 0.39 },
-    leaves: { r: 0.18, g: 0.49, b: 0.20 },
-    water: { r: 0.25, g: 0.64, b: 0.87 },
-    obsidian: { r: 0.07, g: 0.07, b: 0.07 },
-    sand: { r: 0.76, g: 0.70, b: 0.50 },
-    air: { r: 0, g: 0, b: 0 }
+const MATERIALS: Record<string, THREE.MeshStandardMaterial> = {};
+
+// Helper to init materials
+const initMaterials = () => {
+    const setupMat = (color: string, roughness: number = 0.9) => {
+        return new THREE.MeshStandardMaterial({
+            map: createProceduralTexture(color),
+            roughness: roughness,
+            metalness: 0.1,
+        });
+    };
+
+    MATERIALS['grass'] = setupMat('#567d46');
+    MATERIALS['dirt'] = setupMat('#5d4037');
+    MATERIALS['stone'] = setupMat('#757575');
+    MATERIALS['wood'] = setupMat('#4e342e');
+    MATERIALS['brick'] = setupMat('#8d6e63');
+    MATERIALS['sand'] = setupMat('#c2b280');
+    MATERIALS['obsidian'] = setupMat('#121212', 0.2); // Shiny
+    
+    // Transparent / Special blocks
+    MATERIALS['leaves'] = setupMat('#2e7d32');
+    MATERIALS['leaves'].transparent = true;
+    
+    MATERIALS['water'] = new THREE.MeshStandardMaterial({
+        color: 0x40a4df,
+        transparent: true,
+        opacity: 0.7,
+        roughness: 0.0,
+        metalness: 0.1
+    });
 };
 
 class Perlin {
@@ -83,6 +110,7 @@ export class VoxelEngine {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
+    private composer: EffectComposer; // For Post-Processing
     private raycaster: THREE.Raycaster;
     private chunks: Map<string, Chunk> = new Map();
     private velocity = new THREE.Vector3();
@@ -95,7 +123,9 @@ export class VoxelEngine {
     public isPaused = false;
     public isInventoryOpen = false;
     public sensitivity = 0.002;
-    private container: HTMLElement;
+    private objects: THREE.Object3D[] = [];
+    private blockMeshes: Map<string, THREE.Mesh> = new Map();
+    private unsubscribeWorld: (() => void) | null = null;
     private worldPath: string;
     private updateHUD: (x: number, y: number, z: number) => void;
     private perlin: Perlin;
@@ -108,24 +138,56 @@ export class VoxelEngine {
         updateHUD: (x:number, y:number, z:number) => void,
         settings: { seed: number, type: 'default' | 'superflat' }
     ) {
-        this.container = container;
         this.worldPath = worldPath;
         this.updateHUD = updateHUD;
         this.worldType = settings.type;
         this.perlin = new Perlin(settings.seed);
 
+        if (Object.keys(MATERIALS).length === 0) initMaterials();
+
+        // 1. Scene Setup
         this.scene = new THREE.Scene();
+        // Light Blue Sky (Fog matches sky color)
+        const skyColor = new THREE.Color(0x87CEEB);
+        this.scene.background = skyColor;
+        this.scene.fog = new THREE.Fog(skyColor, 20, 300);
+
+        // 2. Camera
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.set(0, 50, 0);
+
+        // 3. Renderer (High Quality)
+        this.renderer = new THREE.WebGLRenderer({ antialias: false }); // Antialias off for Post-Processing efficiency
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
+        this.renderer.shadowMap.enabled = true; // ENABLE SHADOWS
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadows
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping; // Cinematic Colors
+        this.renderer.toneMappingExposure = 1.1;
+        container.appendChild(this.renderer.domElement);
+
+        // 4. Post-Processing (The SEUS Look)
+        this.composer = new EffectComposer(this.renderer);
+        
+        // Pass 1: Render the scene
+        const renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
+
+        // Pass 2: Bloom (Glow)
+        // resolution, strength, radius, threshold
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.4, 0.4, 0.85);
+        this.composer.addPass(bloomPass);
+
+        // Pass 3: Color Correction
+        const outputPass = new OutputPass();
+        this.composer.addPass(outputPass);
+
         this.scene.background = new THREE.Color(0x87CEEB);
         this.scene.fog = new THREE.Fog(0x87CEEB, 50, 400);
 
         this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
         // Start high up to avoid spawning in ground
         this.camera.position.set(0, 100, 0);
-
-        this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        container.appendChild(this.renderer.domElement);
 
         this.matOpaque = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
 
@@ -143,11 +205,32 @@ export class VoxelEngine {
     }
 
     private setupLights() {
-        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-        this.scene.add(ambient);
-        const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-        sun.position.set(50, 200, 100);
-        this.scene.add(sun);
+        // Hemisphere Light (Sky Color + Ground Bounce)
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+        hemiLight.position.set(0, 200, 0);
+        this.scene.add(hemiLight);
+
+        // Sun Light (Directional + Shadows)
+        const dirLight = new THREE.DirectionalLight(0xffffee, 1.2);
+        dirLight.position.set(100, 200, 50);
+        dirLight.castShadow = true;
+        
+        // Shadow High Quality Settings
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 500;
+        
+        // Make shadow area large enough to cover the player
+        const d = 150;
+        dirLight.shadow.camera.left = -d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.bottom = -d;
+        // Fix shadow acne
+        dirLight.shadow.bias = -0.0001; 
+
+        this.scene.add(dirLight);
     }
 
     private getChunkKey(cx: number, cz: number) { return `${cx},${cz}`; }
@@ -227,7 +310,7 @@ export class VoxelEngine {
             const wx = x * BLOCK_SIZE + chunk.cx * CHUNK_SIZE * BLOCK_SIZE;
             const wy = y * BLOCK_SIZE;
             const wz = z * BLOCK_SIZE + chunk.cz * CHUNK_SIZE * BLOCK_SIZE;
-            const col = COLORS[type] || COLORS.dirt;
+            const mat = MATERIALS[type] || MATERIALS.dirt;
             const s = HALF_BLOCK;
             const faces = [
                 { dir: [1, 0, 0], pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ], check: [x+1, y, z] },
@@ -241,7 +324,7 @@ export class VoxelEngine {
                 if (isSolid(face.check[0], face.check[1], face.check[2])) continue;
                 for (const v of face.pos) {
                     vertices.push(wx + v[0] + HALF_BLOCK, wy + v[1] + HALF_BLOCK, wz + v[2] + HALF_BLOCK);
-                    colors.push(col.r, col.g, col.b);
+                    colors.push(mat.color.r, mat.color.g, mat.color.b);
                     normals.push(face.dir[0], face.dir[1], face.dir[2]);
                 }
                 const a = vertCount, b = vertCount + 1, c = vertCount + 2, d = vertCount + 3;
@@ -262,21 +345,35 @@ export class VoxelEngine {
 
     private connectToFirebase() {
         const q = collection(db, `${this.worldPath}/blocks`);
-        onSnapshot(q, (snap) => {
+        this.unsubscribeWorld = onSnapshot(q, (snap) => {
             snap.docChanges().forEach(change => {
                 const d = change.doc.data();
-                const x = d.x / BLOCK_SIZE;
-                const y = d.y / BLOCK_SIZE;
-                const z = d.z / BLOCK_SIZE;
-                const cx = Math.floor(x / CHUNK_SIZE);
-                const cz = Math.floor(z / CHUNK_SIZE);
-                const lx = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
-                const lz = ((z % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
-                const key = this.getChunkKey(cx, cz);
-                let chunk = this.chunks.get(key);
-                if (chunk) {
-                    if (change.type === 'removed') {} 
-                    else { chunk.setBlock(lx, y, lz, d.type); }
+                const key = `${d.x}_${d.y}_${d.z}`;
+                
+                if (change.type === 'removed') {
+                    const m = this.blockMeshes.get(key);
+                    if (m) {
+                        this.scene.remove(m);
+                        this.objects.splice(this.objects.indexOf(m), 1);
+                        this.blockMeshes.delete(key);
+                    }
+                } else {
+                    if (!this.blockMeshes.has(key)) {
+                        // Use the Cached Materials
+                        const material = MATERIALS[d.type] || MATERIALS['dirt'];
+                        const mesh = new THREE.Mesh(new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), material);
+                        
+                        mesh.position.set(d.x, d.y, d.z);
+                        mesh.userData = { id: change.doc.id };
+                        
+                        // ENABLE SHADOWS
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+
+                        this.scene.add(mesh);
+                        this.objects.push(mesh);
+                        this.blockMeshes.set(key, mesh);
+                    }
                 }
             });
         });
@@ -298,7 +395,8 @@ export class VoxelEngine {
         } else {
             this.prevTime = performance.now();
         }
-        this.renderer.render(this.scene, this.camera);
+        
+        this.composer.render();
     };
 
     // --- PHYSICS ENGINE ---
@@ -539,6 +637,7 @@ export class VoxelEngine {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.composer.setSize(window.innerWidth, window.innerHeight);
     }
     public setSensitivity(val: number) { this.sensitivity = val; }
     public dispose() {
