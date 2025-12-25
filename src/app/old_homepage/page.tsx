@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { motion, animate, AnimatePresence } from "framer-motion"
 import { ThemeToggle } from '@/components/main/sunmoon';
 import RainEffect from '@/components/main/realistic-rain';
+import GradientWrapper from "@/components/main/GradientWrapper";
 import {
   FaBirthdayCake,
   FaUserGraduate,
@@ -207,7 +208,10 @@ const Main = () => {
       </div>
       <div className="flex items-center justify-center col-span-1 row-span-1 col-start-11 row-start-2">
         <ThemeToggle />
-        </div>
+      </div>
+      <GradientWrapper gradient="from-yellow-400 to-orange-500">
+        <p>YouTube</p>
+      </GradientWrapper>
     </main>
   )
 }
