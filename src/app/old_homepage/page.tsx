@@ -12,8 +12,8 @@ import {
   FaGithub,
   FaDiscord,
   FaYoutube,
+  FaInstagram
 } from "react-icons/fa"
-import { FaXTwitter } from "react-icons/fa6";
 
 const Main = () => {
   const texts = [
@@ -160,9 +160,9 @@ const Main = () => {
         </div>
       </motion.div>
       <div className="grid rounded-xl grid-rows-7 grid-cols-9 row-start-3 col-start-6 row-span-3 col-span-6 h-full">
-        <motion.a href="https://x.com/09xgg" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
+        <motion.a href="https://www.instagram.com/rrrrrrrrrrvq/" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
-            <FaXTwitter size={48} />
+            <FaInstagram size={48} />
           </div>
           <div className="grid">
             <p>X</p>
