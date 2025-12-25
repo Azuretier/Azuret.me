@@ -14,7 +14,6 @@ const config: Config = {
         foreground: "var(--foreground)",
         border: "var(--border)",
         subtext: "var(--subtext)",
-        instagram: "var(--instagram-gradient)"
       }
     },
     fontFamily: {
