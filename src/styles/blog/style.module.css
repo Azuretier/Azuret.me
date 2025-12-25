@@ -1,0 +1,60 @@
+/* src/app/page.module.css */
+
+.mainWrapper {
+  background-color: #fdfcf0; /* Signature Caramel Cream */
+  min-height: 100vh;
+  color: #1a1a1a;
+}
+
+/* The "Hard Shadow" effect seen on caramel.moe */
+.caramelCard {
+  background: white;
+  border: 2px solid #000;
+  border-radius: 1.5rem;
+  box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  transition: all 0.2s ease-in-out;
+}
+
+.caramelCard:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0px 0px rgba(251, 146, 60, 1); /* Turns Orange on hover */
+}
+
+.sidebarSticky {
+  position: sticky;
+  top: 2rem;
+}
+
+/* Discord Tag - Non-interactable style */
+.discordTag {
+  background-color: #f4f4f5;
+  border: 2px border-zinc-200;
+  color: #a1a1aa;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* Creative floating animation for the avatar */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(6deg); }
+  50% { transform: translateY(-10px) rotate(12deg); }
+}
+
+.avatarDecor {
+  background-color: #fed7aa;
+  border-radius: 2rem;
+  animation: float 5s ease-in-out infinite;
+}
+
+.projectImageWrapper {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-bottom: 2px solid #000;
+  border-radius: 1.3rem 1.3rem 0 0;
+}

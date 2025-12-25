@@ -6,7 +6,7 @@ import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { collection, query, orderBy, getDocs, setDoc, doc, getDoc } from "firebase/firestore";
 import { VoxelEngine, BlockType } from "@/lib/MNSW/VoxelEngine";
 import PanoramaBackground from "@/components/MNSW/PanoramaBackground";
-import styles from "@/styles/Home.module.css";
+import styles from "@/styles/MNSW/style.module.css";
 
 const COLORS: Record<string, string> = {
   grass: '#567d46', dirt: '#5d4037', stone: '#757575',
