@@ -161,7 +161,7 @@ const Main = () => {
       </motion.div>
       <div className="grid rounded-xl grid-rows-7 grid-cols-9 row-start-3 col-start-6 row-span-3 col-span-6 h-full">
         <motion.a href="https://www.instagram.com/rrrrrrrrrrvq/" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-[radial-gradient(circle_at_30%_107%,#fdf497_0%,#fdf497_5%,#fd5949_45%,#d6249f_60%,#285AEB_90%)]">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-[var(--instagram-gradient)] drop-shadow-md">
             <FaInstagram size={48} />
           </div>
           <div className="grid">
