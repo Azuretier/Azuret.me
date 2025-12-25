@@ -14,7 +14,7 @@ const config: Config = {
         foreground: "var(--foreground)",
         border: "var(--border)",
         subtext: "var(--subtext)"
-      },
+      }
     },
     fontFamily: {
       pixel: ["var(--font-pixel)"], 

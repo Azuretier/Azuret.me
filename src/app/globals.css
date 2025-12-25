@@ -67,6 +67,8 @@
     --widget-bg: rgba(255, 255, 255, 0.7);
     --widget-border: rgba(255, 255, 255, 0.3);
 
+    --instagram-gradient: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+
     --font-pixel: 'VT323', monospace;
     --font-logo: 'Russo One', sans-serif; /* Thicker font for the logo base */
   }
