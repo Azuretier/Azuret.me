@@ -34,7 +34,13 @@ export default function GradientMotionLink({
         className={`absolute backdrop-blur-none inset-0 bg-gradient-to-r ${gradient} ${rounded} opacity-0 group-hover:opacity-100`}
         transition={{ duration: 0.3 }}
       />
+      {/* The Content Layer */}
+      <div 
+        className="relative bg-white dark:bg-slate-900 h-full w-full rounded-[calc(var(--radius)-2px)]"
+        style={{ '--radius': '12px' } as React.CSSProperties}
+      >
         {children}
+      </div>
     </motion.a>
   );
 }
