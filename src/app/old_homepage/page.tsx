@@ -97,7 +97,7 @@ const Main = () => {
       <RainEffect onLoaded={() => setIsLoaded(true)} />
 
       {/* --- PROFILE SIDEBAR --- */}
-      <div className={`fade-up ${BORDER_SIZE} ${OUTER_RADIUS} bg-gradient-to-br from-cyan-500 via-purple-500 to-pink-500 row-start-3 col-start-2 row-span-3 col-span-3 h-full shadow-2xl`}>
+      <div className={`fade-up ${BORDER_SIZE} ${OUTER_RADIUS} bg-instagram row-start-3 col-start-2 row-span-3 col-span-3 h-full shadow-2xl`}>
         <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md h-full w-full p-8 flex flex-col justify-center`}>
           <div className="flex items-center justify-start mb-6 w-32 h-32 rounded-full overflow-hidden shadow-lg border-2 border-white/20">
             <AnimatePresence mode="wait">
