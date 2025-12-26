@@ -49,7 +49,7 @@ export const SNS_LINKS: SnsData[] = [
     username: "@rrrrrrrrrrvq", 
     href: "https://instagram.com/rrrrrrrrrrvq", 
     icon: FaInstagram, 
-    gradient: "bg-gradient-to-br from-purple-500 to-pink-500" 
+    gradient: "bg-instagram" 
   },
   { 
     id: "github",
