@@ -82,7 +82,7 @@
     --discord-icon-bg: rgba(88, 101, 242, 1);
     --discord-icon: rgba(255, 255, 255, 1);
 
-    --github-widget-main: rgba(24, 23, 23, 1);
+    --github-widget-main: rgba(231, 232, 232, 0.9);
     --github-widget-inner: rgba(255, 255, 255, 0.9);
     --github-icon-bg: rgb(0, 0, 0);
     --github-icon: rgba(255, 255, 255, 1);
@@ -106,7 +106,7 @@
 
     --discord-widget-inner: rgba(0, 0, 0, 0.6);
 
-    --github-widget-main: rgba(231, 232, 232, 0.9);
+    --github-widget-main: rgba(24, 23, 23, 1);
     --github-widget-inner: rgba(0, 0, 0, 0.6);
   }
 }
