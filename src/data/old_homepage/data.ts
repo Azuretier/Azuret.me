@@ -10,8 +10,6 @@ export interface SnsData {
   username: string;
   href: string;
   icon: any;
-  gradientBg: string;
-  gradientIcon: string;
   isStatic?: boolean;
 }
 
@@ -49,27 +47,21 @@ export const SNS_LINKS: SnsData[] = [
     label: "Instagram", 
     username: "@rrrrrrrrrrvq", 
     href: "https://instagram.com/rrrrrrrrrrvq", 
-    icon: FaInstagram, 
-    gradientBg: "bg-gradient-to-br from-rose-500/80 to-pink-600/80",
-    gradientIcon: "bg-instagram-icon"
+    icon: FaInstagram
   },
   { 
     id: "github",
     label: "GitHub", 
     username: "Azuretier", 
     href: "https://github.com/Azuretier", 
-    icon: FaGithub, 
-    gradientBg: "bg-gradient-to-br from-gray-700/70 to-black/70" ,
-    gradientIcon: "bg-gradient-to-br from-gray-700 to-black"
+    icon: FaGithub
   },
   { 
     id: "discord",
     label: "Discord", 
     username: "@daichi_a", 
     href: "#", 
-    icon: FaDiscord, 
-    gradientBg: "bg-gradient-to-br from-indigo-500/70 to-blue-600/70",
-    gradientIcon: "bg-gradient-to-br from-indigo-500 to-blue-600",
+    icon: FaDiscord,
     isStatic: true 
   },
   { 
@@ -77,9 +69,7 @@ export const SNS_LINKS: SnsData[] = [
     label: "YouTube", 
     username: "@azuchan_a", 
     href: "https://youtube.com/@azuchan_a", 
-    icon: FaYoutube, 
-    gradientBg: "bg-gradient-to-br from-red-600/70 to-red-400/70",
-    gradientIcon: "bg-gradient-to-br from-red-600 to-red-400"
+    icon: FaYoutube
   },
 ];
 
