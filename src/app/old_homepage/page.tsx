@@ -97,8 +97,8 @@ const Main = () => {
       <RainEffect onLoaded={() => setIsLoaded(true)} />
 
       {/* --- PROFILE SIDEBAR --- */}
-      <div className={`fade-up ${BORDER_SIZE} ${OUTER_RADIUS} bg-instagram row-start-3 col-start-2 row-span-3 col-span-3 h-full shadow-2xl`}>
-        <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md h-full w-full p-8 flex flex-col justify-center`}>
+      <div className={`fade-up ${BORDER_SIZE} ${OUTER_RADIUS} bg-[var(--profile-widget-main)] row-start-3 col-start-2 row-span-3 col-span-3 h-full shadow-2xl`}>
+        <div className={`${INNER_RADIUS} bg-[var(--profile-widget-inner)] backdrop-blur-md h-full w-full p-8 flex flex-col justify-center`}>
           <div className="flex items-center justify-start mb-6 w-32 h-32 rounded-full overflow-hidden shadow-lg border-2 border-white/20">
             <AnimatePresence mode="wait">
               <motion.img
@@ -181,26 +181,30 @@ const Main = () => {
 
 const SnsWidget = ({ href, icon: Icon, label, username, isStatic }: any) => {
 
-  const brandStyles: Record<string, { iconBg: string; icon: string; bg: string }> = {
+  const brandStyles: Record<string, { iconBg: string; icon: string; widgetMain: string; widgetInner: string }> = {
     youtube: { 
-      iconBg: "bg-youtube-icon-bg", 
-      icon: "text-youtube-icon",
-      bg: "bg-youtube-bg" 
+      iconBg: "bg-[var(--youtube-icon-bg)]", 
+      icon: "text-[var(--youtube-icon)]",
+      widgetMain: "bg-[var(--youtube-widget-main)]",
+      widgetInner: "bg-[var(--youtube-widget-inner)]"
     },
     github: { 
-      iconBg: "bg-github-icon-bg", 
-      icon: "text-github-icon",
-      bg: "bg-github-bg" 
+      iconBg: "bg-[var(--github-icon-bg)]", 
+      icon: "text-[var(--github-icon)]",
+      widgetMain: "bg-[var(--github-widget-main)]",
+      widgetInner: "bg-[var(--github-widget-inner)]"
     },
     instagram: { 
-      iconBg: "bg-instagram-icon-bg", 
-      icon: "text-instagram-icon", 
-      bg: "bg-instagram-bg" 
+      iconBg: "bg-[var(--instagram-icon-bg)]", 
+      icon: "text-[var(--instagram-icon)]", 
+      widgetMain: "bg-[var(--instagram-widget-main)]",
+      widgetInner: "bg-[var(--instagram-widget-inner)]"
     },
     discord: { 
-      iconBg: "bg-discord-icon-bg", 
-      icon: "text-discord-icon",
-      bg: "bg-discord-bg" 
+      iconBg: "bg-[var(--discord-icon-bg)]", 
+      icon: "text-[var(--discord-icon)]",
+      widgetMain: "bg-[var(--discord-widget-main)]",
+      widgetInner: "bg-[var(--discord-widget-inner)]"
     },
   };
 
@@ -208,11 +212,12 @@ const SnsWidget = ({ href, icon: Icon, label, username, isStatic }: any) => {
   const activeBrand = brandStyles[label.toLowerCase()] || { 
     iconBg: "bg-gray-500", 
     icon: "text-gray-500",
-    bg: "bg-gray-200" 
+    widgetMain: "bg-gray-200",
+    widgetInner: "bg-gray-100"
   };
 
   const content = (
-    <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-center gap-3`}>
+    <div className={`${INNER_RADIUS} ${activeBrand.widgetInner} backdrop-blur-md p-6 h-full flex flex-col justify-center gap-3`}>
         <div className={`flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg ${activeBrand.iconBg} ${activeBrand.icon}`}>
           <Icon size={32} />
         </div>
@@ -224,7 +229,7 @@ const SnsWidget = ({ href, icon: Icon, label, username, isStatic }: any) => {
   );
 
   return (
-    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} ${activeBrand.bg} opacity-90 hover:opacity-100 transition-all cursor-pointer`}>
+    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} ${activeBrand.widgetMain} opacity-90 hover:opacity-100 transition-all cursor-pointer`}>
       {isStatic ? content : <a href={href} target="_blank" rel="noopener noreferrer" className="block h-full">{content}</a>}
     </div>
   );
