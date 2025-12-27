@@ -238,7 +238,7 @@ const SnsWidget = ({ href, icon: Icon, label, username, isStatic }: any) => {
 const ProjectWidget = ({ title, status, tech, description }: any) => {
   return (
     <div className={`${BORDER_SIZE} ${OUTER_RADIUS} bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 transition-all cursor-pointer shadow-xl h-full w-full`}>
-      <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-between`}>
+      <div className={`${INNER_RADIUS} bg-[var(--profile-widget-inner)] backdrop-blur-md p-6 h-full flex flex-col justify-between`}>
         <div className="space-y-3">
             <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-cyan-400/10 text-cyan-400 uppercase tracking-[0.2em] border border-cyan-400/20">{status}</span>
             <h3 className="text-2xl font-black tracking-tighter leading-none">{title}</h3>
