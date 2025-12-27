@@ -193,7 +193,7 @@ const SnsWidget = ({ href, icon: Icon, label, username, gradientBg, gradientIcon
   );
 
   return (
-    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} ${gradientBg} opacity-90 bg-opacity-20 hover:opacity-100 transition-all cursor-pointer`}>
+    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} ${gradientBg} opacity-90 hover:opacity-100 transition-all cursor-pointer`}>
       {isStatic ? content : <a href={href} target="_blank" rel="noopener noreferrer" className="block h-full">{content}</a>}
     </div>
   );
