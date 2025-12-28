@@ -548,7 +548,7 @@ const Main = () => {
       setNotifications(data.notifications || true);
       setLanguage(data.language || 'en');
     }
-  }, [user]);
+  }, [isLoaded]);
 
   const saveSettings = useCallback(async () => {
     if (!user) return;
@@ -563,7 +563,7 @@ const Main = () => {
             language, 
             updatedAt: Date.now() 
         }, { merge: true });
-    }, [theme, rainIntensity, newsSpeed, isDarkMode, notifications, language, user]);
+    }, [theme, rainIntensity, newsSpeed, isDarkMode, notifications, language]);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
