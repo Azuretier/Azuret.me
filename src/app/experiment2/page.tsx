@@ -209,7 +209,7 @@ const Main = () => {
         <RainEffect onLoaded={() => setIsLoaded(true)} />
 
         {/* Clock and News Overlay */}
-        <div className="absolute top-8 left-8 z-10 space-y-4">
+        <div className="absolute align-middle left-16 z-10 space-y-4">
           {/* Large Clock */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -259,7 +259,7 @@ const Main = () => {
         </div>
 
         {/* Desktop Icons */}
-        <div className="absolute top-6 left-6 grid grid-cols-1 gap-6">
+        <div className="absolute top-6 right-6 grid grid-cols-1 gap-6">
           {desktopIcons.map((icon) => (
             <motion.button
               key={icon.id}
