@@ -551,7 +551,7 @@ const Main = () => {
       setNotifications(data.notifications || true);
       setLanguage(data.language || 'en');
     }
-  }, [theme, rainIntensity, newsSpeed, isDarkMode, notifications, language]);
+  }, [isLoading]);
 
   const saveSettings = useCallback(async () => {
     if (!user) return;
