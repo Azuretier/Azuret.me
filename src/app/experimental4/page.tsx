@@ -264,7 +264,7 @@ const loadSettings = useCallback(async () => {
     { id: 'settings', icon: Settings, label: t('settings'), color: 'bg-red-500' },
   ];
 
-  const MusicPlayerWindow = ({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
+  const MusicPlayerWindow = memo(({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTrack, setCurrentTrack] = useState(0);
     const [volume, setVolume] = useState(75);
@@ -502,13 +502,13 @@ const loadSettings = useCallback(async () => {
         </div>
       </div>
     );
-  };
+  });
 
 // ============================================
 // 5. DISCORD SERVERS WINDOW
 // ============================================
 
-  const DiscordWindow = ({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
+  const DiscordWindow = memo(({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [copiedInvite, setCopiedInvite] = useState<string | null>(null);
     const [hoveredServer, setHoveredServer] = useState<number | null>(null);
@@ -623,7 +623,7 @@ const loadSettings = useCallback(async () => {
         </div>
       </div>
     );
-  };
+  });
 
 // ============================================
 // 6. LIVE CHAT WINDOW (Real-time with Firestore)
@@ -640,7 +640,7 @@ const loadSettings = useCallback(async () => {
     type: 'message' | 'join' | 'leave';
   }
 
-  const LiveChatWindow = ({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
+  const LiveChatWindow = memo(({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([
       { id: '1', userId: 'system', username: 'System', avatar: '', message: 'Welcome to the live chat!', timestamp: new Date(), type: 'join' },
       { id: '2', userId: 'user1', username: 'CoolUser123', avatar: '/api/placeholder/32/32', message: 'Hey everyone! 👋', timestamp: new Date(Date.now() - 60000), type: 'message' },
@@ -786,7 +786,7 @@ const loadSettings = useCallback(async () => {
         </div>
       </div>
     );
-  };
+  });
 
 // ============================================
 // 7. BLOG & SNS WINDOW
@@ -1577,7 +1577,7 @@ const WindowFrame = ({
 };
 
 // Profile Window
-const ProfileWindow = ({ theme, isDarkMode, t }: { theme: any; isDarkMode: boolean; t: (key: string) => string }) => (
+const ProfileWindow = memo(({ theme, isDarkMode, t }: { theme: any; isDarkMode: boolean; t: (key: string) => string }) => (
   <div className="space-y-6">
     <div className="flex items-start gap-6">
       <div className="relative">
@@ -1600,7 +1600,7 @@ const ProfileWindow = ({ theme, isDarkMode, t }: { theme: any; isDarkMode: boole
       <InfoCard icon={Globe} label={t('website')} value={PROFILE_INFO.website} color="text-purple-400" isDarkMode={isDarkMode} />
     </div>
   </div>
-);
+));
 
 const InfoCard = ({ icon: Icon, label, value, color, isDarkMode }: any) => (
   <div className={`${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-100'} p-4 rounded-lg border ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
