@@ -8,6 +8,7 @@ import { db } from "@/lib/portfolio/firebase";
 import { auth } from "@/lib/portfolio/firebase";
 import { Cake, GraduationCap, Send, Folder, Share2, ChevronRight, Star, Github, Youtube, Instagram, MessageCircle, Sun, Moon, MapPin, Mail, Globe, Sparkles, TrendingUp, Clock as ClockIcon, ExternalLink, User as UserIcon, BarChart3, Terminal, Settings, X, Minimize2, Maximize2, FolderOpen, Image as ImageIcon, Music, Film, BookOpen, Bot, Command, Zap, Shield, Heart, Code, HelpCircle, ChevronDown, ChevronUp, Copy, Check, ArrowLeft, Layers, Server, Database, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Battery, BatteryCharging, Cpu, HardDrive, Thermometer,Users, Hash, Mic, Headphones, AtSign, Send as SendIcon, Smile, Paperclip, PenSquare, Calendar, Tag, Eye, ThumbsUp, MessageSquare as CommentIcon, Rss, Bookmark, MoreHorizontal, Wifi, Bluetooth, Monitor, Activity, Zap as ZapIcon } from "lucide-react"
 import RainEffect from '@/components/main/realistic-rain';
+import WindowFrame from "@/components/portfolio/WindowFrame";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { TerminalLineType, TRANSLATIONS, SNS_LINKS, MUSIC_TRACKS, THEMES, PROFILE_INFO, DISCORD_SERVERS, PROJECTS, VISITOR_DATA, NEWS_HEADLINES, AZURE_DOCS, BLOG_POSTS, TERMINAL_COMMANDS } from "@/components/portfolio/data";
 
@@ -2191,83 +2192,6 @@ interface WindowFrameProps {
   position: WindowPosition;
   onPositionChange: (x: number, y: number) => void;
 }
-
-const WindowFrame = ({
-  title,
-  id,
-  onClose,
-  isActive,
-  onFocus,
-  children,
-  theme,
-  isDarkMode,
-  large = false,
-  scrollable = false,
-  position,
-  onPositionChange,
-}: WindowFrameProps) => {
-  return (
-    <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.9, opacity: 0 }}
-      drag
-      dragMomentum={false}
-      // THE FIX: Calculate absolute position relative to where drag ended
-      onDragEnd={(e, info) => {
-        onPositionChange(position.x, position.y);
-      }}
-      onPointerDown={onFocus}
-      style={{
-        position: 'absolute',
-        left: position.x,
-        top: position.y,
-        zIndex: isActive ? 50 : 10, // Stacking handled by zIndex + array order
-      }}
-      className={`${isDarkMode ? 'bg-slate-800' : 'bg-white'} rounded-lg shadow-2xl border-2 ${
-        isActive ? `border-${theme.accent}` : isDarkMode ? 'border-white/10' : 'border-slate-200'
-      } overflow-hidden flex flex-col`}
-    >
-      {/* Title Bar (Drag Handle) */}
-      <div
-        className={`bg-gradient-to-r ${
-          isActive ? theme.gradient : isDarkMode ? 'from-slate-900 to-slate-800' : 'from-slate-100 to-slate-200'
-        } px-4 py-3 flex items-center justify-between cursor-grab active:cursor-grabbing border-b ${
-          isDarkMode ? 'border-white/10' : 'border-slate-200'
-        }`}
-      >
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className={`${isActive || isDarkMode ? 'text-white' : 'text-slate-700'} font-bold text-sm truncate`}>
-            {title}
-          </span>
-        </div>
-        <div className="flex gap-2 flex-shrink-0 ml-4">
-          <button className="w-3 h-3 rounded-full bg-yellow-500 hover:opacity-80 transition-opacity" />
-          <button className="w-3 h-3 rounded-full bg-green-500 hover:opacity-80 transition-opacity" />
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent focusing when closing
-              onClose();
-            }}
-            className="w-3 h-3 rounded-full bg-red-500 hover:opacity-80 transition-opacity"
-          />
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <div
-        onPointerDown={(e) => e.stopPropagation()} // Crucial: allow clicking content without dragging
-        className={`p-6 ${
-          large ? 'w-[900px] h-[600px]' : 'w-[700px]'
-        } ${
-          large || scrollable ? 'overflow-y-auto overflow-x-hidden' : ''
-        } max-h-[80vh]`}
-      >
-        {children}
-      </div>
-    </motion.div>
-  );
-};
 
 const InfoCard = ({ icon: Icon, label, value, color, isDarkMode }: any) => (
   <div className={`${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-100'} p-4 rounded-lg border ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
