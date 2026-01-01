@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { memo, useState } from "react";
-import { X, Minus, Square } from "lucide-react";
+import { memo, useState, useRef } from "react";
+import { X, Minus, Square, ChevronDown } from "lucide-react";
 
 interface WindowPosition {
   x: number;
@@ -11,6 +11,7 @@ interface WindowFrameProps {
   title: string;
   id: string;
   onClose: () => void;
+  onHide?: () => void; // New: hide/minimize to taskbar
   isActive: boolean;
   onFocus: () => void;
   children: React.ReactNode;
@@ -25,7 +26,8 @@ interface WindowFrameProps {
 const WindowFrame = memo(({ 
   title, 
   id, 
-  onClose, 
+  onClose,
+  onHide,
   isActive, 
   onFocus, 
   children, 
@@ -37,10 +39,26 @@ const WindowFrame = memo(({
   onPositionChange,
 }: WindowFrameProps) => {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [hoveredButton, setHoveredButton] = useState<'close' | 'minimize' | 'maximize' | null>(null);
+  const [hoveredButton, setHoveredButton] = useState<'close' | 'hide' | 'maximize' | null>(null);
+  
+  // Store position before maximizing so we can restore it
+  const savedPositionRef = useRef<WindowPosition>({ x: position.x, y: position.y });
 
   const handleMaximize = () => {
+    if (!isMaximized) {
+      // Save current position before maximizing
+      savedPositionRef.current = { x: position.x, y: position.y };
+    } else {
+      // Restore saved position when un-maximizing
+      onPositionChange(savedPositionRef.current.x, savedPositionRef.current.y);
+    }
     setIsMaximized(!isMaximized);
+  };
+
+  const handleHide = () => {
+    if (onHide) {
+      onHide();
+    }
   };
 
   return (
@@ -49,6 +67,8 @@ const WindowFrame = memo(({
       animate={{ 
         scale: 1, 
         opacity: 1,
+        x: isMaximized ? -position.x : 0,
+        y: isMaximized ? -position.y : 0,
       }}
       exit={{ scale: 0.9, opacity: 0 }}
       transition={{ duration: 0.15 }}
@@ -64,9 +84,9 @@ const WindowFrame = memo(({
       }}
       onMouseDown={onFocus}
       style={{
-        position: isMaximized ? 'fixed' : 'absolute',
-        left: isMaximized ? 0 : position.x,
-        top: isMaximized ? 0 : position.y,
+        position: 'absolute',
+        left: position.x,
+        top: position.y,
         width: isMaximized ? '100vw' : 'auto',
         height: isMaximized ? 'calc(100vh - 64px)' : 'auto',
         zIndex: isActive ? 50 : 40,
@@ -88,7 +108,8 @@ const WindowFrame = memo(({
       <div 
         className={`
           ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'}
-          px-4 py-2
+          pl-4 pr-0
+          h-10
           flex items-center justify-between
           cursor-move 
           border-b 
@@ -108,34 +129,28 @@ const WindowFrame = memo(({
         </div>
 
         {/* Window Controls - Right Side */}
-        <div className="flex items-center">
-          {/* Minimize Button */}
+        <div className="flex items-center h-full">
+          {/* Hide/Minimize to Taskbar Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // Minimize functionality - could minimize to taskbar
+              handleHide();
             }}
-            onMouseEnter={() => setHoveredButton('minimize')}
+            onMouseEnter={() => setHoveredButton('hide')}
             onMouseLeave={() => setHoveredButton(null)}
             className={`
-              w-11 h-8
+              w-12 h-full
               flex items-center justify-center
-              transition-colors duration-150
-              ${hoveredButton === 'minimize' 
-                ? 'bg-yellow-500' 
-                : 'bg-transparent hover:bg-white/10'
+              transition-colors duration-100
+              ${hoveredButton === 'hide' 
+                ? isDarkMode ? 'bg-white/20' : 'bg-black/10'
+                : 'bg-transparent'
               }
             `}
           >
-            <Minus 
-              size={16} 
-              className={`
-                transition-colors duration-150
-                ${hoveredButton === 'minimize' 
-                  ? 'text-yellow-900' 
-                  : isDarkMode ? 'text-white/70' : 'text-slate-500'
-                }
-              `}
+            <ChevronDown 
+              size={18} 
+              className={isDarkMode ? 'text-white/70' : 'text-slate-500'}
             />
           </button>
 
@@ -148,24 +163,18 @@ const WindowFrame = memo(({
             onMouseEnter={() => setHoveredButton('maximize')}
             onMouseLeave={() => setHoveredButton(null)}
             className={`
-              w-11 h-8
+              w-12 h-full
               flex items-center justify-center
-              transition-colors duration-150
+              transition-colors duration-100
               ${hoveredButton === 'maximize' 
-                ? 'bg-green-500' 
-                : 'bg-transparent hover:bg-white/10'
+                ? isDarkMode ? 'bg-white/20' : 'bg-black/10'
+                : 'bg-transparent'
               }
             `}
           >
             <Square 
               size={14} 
-              className={`
-                transition-colors duration-150
-                ${hoveredButton === 'maximize' 
-                  ? 'text-green-900' 
-                  : isDarkMode ? 'text-white/70' : 'text-slate-500'
-                }
-              `}
+              className={isDarkMode ? 'text-white/70' : 'text-slate-500'}
             />
           </button>
 
@@ -178,19 +187,19 @@ const WindowFrame = memo(({
             onMouseEnter={() => setHoveredButton('close')}
             onMouseLeave={() => setHoveredButton(null)}
             className={`
-              w-11 h-8
+              w-12 h-full
               flex items-center justify-center
-              transition-colors duration-150
+              transition-colors duration-100
               ${hoveredButton === 'close' 
                 ? 'bg-red-500' 
-                : 'bg-transparent hover:bg-white/10'
+                : 'bg-transparent'
               }
             `}
           >
             <X 
-              size={16} 
+              size={18} 
               className={`
-                transition-colors duration-150
+                transition-colors duration-100
                 ${hoveredButton === 'close' 
                   ? 'text-white' 
                   : isDarkMode ? 'text-white/70' : 'text-slate-500'
