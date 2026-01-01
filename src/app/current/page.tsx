@@ -1643,6 +1643,7 @@ const SettingsWindow = memo(({ theme }: { theme: any }) => {
 });
 
 const Main = () => {
+  const [hiddenWindows, setHiddenWindows] = useState<string[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [theme, setTheme] = useState('purple');
   const [rainIntensity, setRainIntensity] = useState(150);
@@ -1662,6 +1663,24 @@ const Main = () => {
   const [selectedSns, setSelectedSns] = useState(0);
   const [selectedProject, setSelectedProject] = useState(0);
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
+
+  // Hide function
+  const hideWindow = (windowId: string) => {
+    setHiddenWindows(prev => [...prev, windowId]);
+    // Optionally change active window
+    if (activeWindow === windowId) {
+      const visibleWindows = openWindows.filter(id => id !== windowId && !hiddenWindows.includes(id));
+      setActiveWindow(visibleWindows[visibleWindows.length - 1] || null);
+    }
+  };
+
+  // Show function (call from taskbar)
+  const showWindow = (windowId: string) => {
+    setHiddenWindows(prev => prev.filter(id => id !== windowId));
+    setActiveWindow(windowId);
+    // Bring to front
+    setOpenWindows(prev => [...prev.filter(id => id !== windowId), windowId]);
+  };
 
   // Store window positions to prevent teleporting
   const currentTheme = useMemo(() => 
@@ -2111,26 +2130,26 @@ const Main = () => {
         {/* Dynamic Windows Rendering */}
         <AnimatePresence>
           {openWindows.map((windowId) => {
-            const config = windowConfig[windowId];
-            if (!config) return null;
-
+            const isHidden = hiddenWindows.includes(windowId);
+            const icon = desktopIcons.find(i => i.id === windowId);
+            
             return (
-              <WindowFrame
+              <button
                 key={windowId}
-                id={windowId}
-                title={config.title}
-                onClose={() => closeWindow(windowId)}
-                isActive={activeWindow === windowId}
-                onFocus={() => handleWindowFocus(windowId)}
-                theme={currentTheme}
-                isDarkMode={isDarkMode}
-                large={config.large}
-                scrollable={config.scrollable}
-                position={windowPositions[windowId] || { x: 100 + openWindows.indexOf(windowId) * 30, y: 100 + openWindows.indexOf(windowId) * 30 }}
-                onPositionChange={(posX, posY) => updateWindowPosition(windowId, posX, posY)}
+                onClick={() => isHidden ? showWindow(windowId) : handleWindowFocus(windowId)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-lg transition-all
+                  ${activeWindow === windowId && !isHidden
+                    ? 'bg-white/20 border-white/30 border-2'
+                    : isHidden
+                      ? 'bg-white/5 border-2 border-transparent opacity-50'
+                      : 'bg-white/5 hover:bg-white/10 border-2 border-transparent'
+                  }
+                `}
               >
-                {config.content}
-              </WindowFrame>
+                {icon && <icon.icon className="text-white" size={18} />}
+                <span className="text-white text-sm font-medium">{windowConfig[windowId]?.title}</span>
+              </button>
             );
           })}
         </AnimatePresence>
