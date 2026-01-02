@@ -2129,27 +2129,30 @@ const Main = () => {
 
         {/* Dynamic Windows Rendering */}
         <AnimatePresence>
-          {openWindows.map((windowId) => {
-            const isHidden = hiddenWindows.includes(windowId);
-            const icon = desktopIcons.find(i => i.id === windowId);
-            
+          {openWindows
+          .filter(windowId => !hiddenWindows.includes(windowId))
+          .map((windowId) => {
+            const config = windowConfig[windowId];
+            if (!config) return null;
+
             return (
-              <button
+              <WindowFrame
                 key={windowId}
-                onClick={() => isHidden ? showWindow(windowId) : handleWindowFocus(windowId)}
-                className={`
-                  flex items-center gap-2 px-4 py-2 rounded-lg transition-all
-                  ${activeWindow === windowId && !isHidden
-                    ? 'bg-white/20 border-white/30 border-2'
-                    : isHidden
-                      ? 'bg-white/5 border-2 border-transparent opacity-50'
-                      : 'bg-white/5 hover:bg-white/10 border-2 border-transparent'
-                  }
-                `}
+                id={windowId}
+                title={config.title}
+                onClose={() => closeWindow(windowId)}
+                onHide={() => hideWindow(windowId)}  // <-- Add this
+                isActive={activeWindow === windowId}
+                onFocus={() => handleWindowFocus(windowId)}
+                theme={currentTheme}
+                isDarkMode={isDarkMode}
+                large={config.large}
+                scrollable={config.scrollable}
+                position={windowPositions[windowId] || { x: 100, y: 100 }}
+                onPositionChange={(x, y) => updateWindowPosition(windowId, x, y)}
               >
-                {icon && <icon.icon className="text-white" size={18} />}
-                <span className="text-white text-sm font-medium">{windowConfig[windowId]?.title}</span>
-              </button>
+                {config.content}
+              </WindowFrame>
             );
           })}
         </AnimatePresence>
@@ -2168,22 +2171,25 @@ const Main = () => {
           {/* Open windows in taskbar */}
           <div className="flex-1 flex gap-2">
             {openWindows.map((windowId) => {
+              const isHidden = hiddenWindows.includes(windowId);
               const icon = desktopIcons.find(i => i.id === windowId);
-              const config = windowConfig[windowId];
+              
               return (
                 <button
                   key={windowId}
-                  onClick={() => handleWindowFocus(windowId)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    activeWindow === windowId
-                      ? `${isDarkMode ? 'bg-white/20 border-white/30' : 'bg-slate-200 border-slate-300'} border-2`
-                      : `${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'} border-2 border-transparent`
-                  }`}
+                  onClick={() => isHidden ? showWindow(windowId) : handleWindowFocus(windowId)}
+                  className={`
+                    flex items-center gap-2 px-4 py-2 rounded-lg transition-all
+                    ${activeWindow === windowId && !isHidden
+                      ? 'bg-white/20 border-white/30 border-2'
+                      : isHidden
+                        ? 'bg-white/5 border-2 border-transparent opacity-50'
+                        : 'bg-white/5 hover:bg-white/10 border-2 border-transparent'
+                    }
+                  `}
                 >
-                  {icon && <icon.icon className={isDarkMode ? 'text-white' : 'text-slate-700'} size={18} />}
-                  <span className={`${isDarkMode ? 'text-white' : 'text-slate-700'} text-sm font-medium`}>
-                    {config?.title || windowId}
-                  </span>
+                  {icon && <icon.icon className="text-white" size={18} />}
+                  <span className="text-white text-sm font-medium">{windowConfig[windowId]?.title}</span>
                 </button>
               );
             })}
