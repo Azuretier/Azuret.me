@@ -1,7 +1,8 @@
 // ============================================
 // FIXED WindowFrame Component
-// - Cursor stays on title bar when exiting fullscreen via drag
-// - Smooth dragging with motion values
+// - Can drag immediately after exiting fullscreen
+// - Cursor stays on title bar when exiting fullscreen
+// - Smooth dragging
 // ============================================
 
 import { motion, useMotionValue } from "framer-motion";
@@ -46,14 +47,14 @@ const WindowFrame = memo(({
 }: WindowFrameProps) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<'close' | 'hide' | 'maximize' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Use motion values for smooth dragging
   const x = useMotionValue(position.x);
   const y = useMotionValue(position.y);
   
   const savedPositionRef = useRef<WindowPosition>({ x: position.x, y: position.y });
-  const exitingFullscreenRef = useRef(false);
-  const cursorOffsetRef = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Get window width based on props
   const getWindowWidth = () => {
@@ -63,11 +64,11 @@ const WindowFrame = memo(({
 
   // Sync motion values with position prop when not dragging
   useEffect(() => {
-    if (!isMaximized && !exitingFullscreenRef.current) {
+    if (!isMaximized && !isDragging) {
       x.set(position.x);
       y.set(position.y);
     }
-  }, [position.x, position.y, isMaximized]);
+  }, [position.x, position.y, isMaximized, isDragging]);
 
   const handleMaximize = () => {
     if (!isMaximized) {
@@ -95,39 +96,51 @@ const WindowFrame = memo(({
     action();
   };
 
-  const handlePointerDown = (e: React.PointerEvent) => {
+  const handleDragStart = (event: MouseEvent | TouchEvent | PointerEvent) => {
+    setIsDragging(true);
+    
     if (!isActive) {
       onFocus();
     }
 
     if (isMaximized) {
-      // Store where cursor is as percentage across the screen
-      const cursorX = e.clientX;
-      const cursorY = e.clientY;
+      // Get cursor position
+      let cursorX = 0;
+      let cursorY = 0;
+      
+      if ('clientX' in event) {
+        cursorX = event.clientX;
+        cursorY = event.clientY;
+      } else if ('touches' in event && event.touches[0]) {
+        cursorX = event.touches[0].clientX;
+        cursorY = event.touches[0].clientY;
+      }
+      
       const screenWidth = window.innerWidth;
       const windowWidth = getWindowWidth();
       
-      // Calculate the offset - where on the restored window should cursor be
-      // Use percentage of screen width mapped to window width
+      // Calculate cursor position as percentage of screen, then map to window width
       const percentX = cursorX / screenWidth;
-      cursorOffsetRef.current = {
-        x: percentX * windowWidth,
-        y: cursorY // Keep Y offset as actual cursor Y for title bar positioning
-      };
+      const offsetX = percentX * windowWidth;
       
-      exitingFullscreenRef.current = true;
+      // Calculate new position so cursor stays on title bar
+      const newX = cursorX - offsetX;
+      const newY = cursorY - 20; // 20px = middle of title bar
+      
+      // Exit fullscreen
       setIsMaximized(false);
       
-      // Set initial position immediately
-      const newX = cursorX - cursorOffsetRef.current.x;
-      const newY = cursorY - 20;
+      // Set position immediately
       x.set(Math.max(0, newX));
       y.set(Math.max(0, newY));
+      
+      // Save this as the new position
+      savedPositionRef.current = { x: Math.max(0, newX), y: Math.max(0, newY) };
     }
   };
 
   const handleDragEnd = () => {
-    exitingFullscreenRef.current = false;
+    setIsDragging(false);
     
     const currentX = x.get();
     const currentY = y.get();
@@ -143,6 +156,7 @@ const WindowFrame = memo(({
 
   return (
     <motion.div
+      ref={containerRef}
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ 
         scale: 1, 
@@ -150,11 +164,17 @@ const WindowFrame = memo(({
       }}
       exit={{ scale: 0.9, opacity: 0 }}
       transition={{ duration: 0.15 }}
-      drag={!isMaximized}
+      drag
       dragMomentum={false}
       dragElastic={0}
+      dragListener={!isMaximized} // Allow drag listener when not maximized
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onPointerDown={handlePointerDown}
+      onMouseDown={(e) => {
+        if (!isActive) {
+          onFocus();
+        }
+      }}
       style={{
         position: isMaximized ? 'fixed' : 'absolute',
         left: isMaximized ? 0 : undefined,
@@ -178,8 +198,31 @@ const WindowFrame = memo(({
         ${isMaximized ? 'rounded-none' : 'rounded-xl'}
       `}
     >
-      {/* Title Bar */}
+      {/* Title Bar - handles drag for fullscreen windows */}
       <div 
+        onMouseDown={(e) => {
+          // For maximized windows, we need to manually trigger drag behavior
+          if (isMaximized) {
+            handleDragStart(e.nativeEvent);
+            
+            // Manually handle the drag
+            const handleMouseMove = (moveEvent: MouseEvent) => {
+              const newX = moveEvent.clientX - (getWindowWidth() * (e.clientX / window.innerWidth));
+              const newY = moveEvent.clientY - 20;
+              x.set(Math.max(0, newX));
+              y.set(Math.max(0, newY));
+            };
+            
+            const handleMouseUp = () => {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+              handleDragEnd();
+            };
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          }
+        }}
         className={`
           ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'}
           pl-4 pr-0
@@ -206,7 +249,7 @@ const WindowFrame = memo(({
         <div className="flex items-center h-full">
           {/* Hide/Minimize to Taskbar Button */}
           <button
-            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => handleButtonClick(e, handleHide)}
             onMouseEnter={() => setHoveredButton('hide')}
             onMouseLeave={() => setHoveredButton(null)}
@@ -228,7 +271,7 @@ const WindowFrame = memo(({
 
           {/* Maximize Button */}
           <button
-            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => handleButtonClick(e, handleMaximize)}
             onMouseEnter={() => setHoveredButton('maximize')}
             onMouseLeave={() => setHoveredButton(null)}
@@ -250,7 +293,7 @@ const WindowFrame = memo(({
 
           {/* Close Button */}
           <button
-            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => handleButtonClick(e, onClose)}
             onMouseEnter={() => setHoveredButton('close')}
             onMouseLeave={() => setHoveredButton(null)}
@@ -280,7 +323,7 @@ const WindowFrame = memo(({
 
       {/* Content */}
       <div 
-        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         className={`
           p-6 
           ${isMaximized 
