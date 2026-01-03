@@ -51,7 +51,7 @@ export default function AzuretPortfolio() {
           <footer className="mt-10 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              <span className="text-sm text-blue-300 font-mono">Discord: azure_dev</span>
+              <span className="text-sm text-blue-300 font-mono">Discord: daichi_a</span>
             </div>
           </footer>
         </div>
