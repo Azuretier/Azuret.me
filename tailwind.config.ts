@@ -15,12 +15,19 @@ const config: Config = {
         foreground: "var(--foreground)",
         border: "var(--border)",
         subtext: "var(--subtext)",
+        azure: {
+          500: '#007FFF',
+          600: '#0066CC',
+        },
       },
       backgroundImage: {
         // This maps 'bg-instagram' to your CSS variable
         'instagram-widget-main': "var(--instagram-widget-main)",
         'instagram-icon-bg': "var(--instagram-icon-bg)",
-      }
+      },
+      animation: {
+      'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+    }
     },
     fontFamily: {
       pixel: ["var(--font-pixel)"], 
