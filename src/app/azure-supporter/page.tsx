@@ -92,7 +92,17 @@ export default function AzureSupporterPage() {
   };
 
   const handleDiscordLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || 'YOUR_DISCORD_CLIENT_ID_HERE';
+    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+    
+    if (!clientId) {
+      setStatus({ 
+        loading: false, 
+        error: 'Discord Client ID is not configured. Please contact the administrator.', 
+        success: false 
+      });
+      return;
+    }
+    
     const redirectUri = encodeURIComponent(
       process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI || 
       `${window.location.origin}/api/auth/discord/callback`

@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client, GatewayIntentBits } from 'discord.js';
 
-// Discord client singleton
+// Discord client singleton with connection state
 let discordClient: Client | null = null;
+let isConnecting = false;
 
 async function getDiscordClient(): Promise<Client> {
+  // If client is already ready, return it
   if (discordClient && discordClient.isReady()) {
     return discordClient;
+  }
+
+  // If already connecting, wait for it to complete
+  if (isConnecting) {
+    // Wait up to 10 seconds for the connection to complete
+    const startTime = Date.now();
+    while (isConnecting && Date.now() - startTime < 10000) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    if (discordClient && discordClient.isReady()) {
+      return discordClient;
+    }
+    throw new Error('Discord client initialization timeout');
   }
 
   const token = process.env.DISCORD_BOT_TOKEN;
@@ -14,18 +29,32 @@ async function getDiscordClient(): Promise<Client> {
     throw new Error('DISCORD_BOT_TOKEN is not configured');
   }
 
-  discordClient = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
-  });
+  isConnecting = true;
 
-  await discordClient.login(token);
-  
-  // Wait for client to be ready
-  await new Promise<void>((resolve) => {
-    discordClient!.once('ready', () => resolve());
-  });
+  try {
+    discordClient = new Client({
+      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
+    });
 
-  return discordClient;
+    await discordClient.login(token);
+    
+    // Wait for client to be ready with timeout
+    await Promise.race([
+      new Promise<void>((resolve) => {
+        discordClient!.once('ready', () => resolve());
+      }),
+      new Promise<void>((_, reject) => 
+        setTimeout(() => reject(new Error('Discord client ready timeout')), 10000)
+      )
+    ]);
+
+    return discordClient;
+  } catch (error) {
+    discordClient = null;
+    throw error;
+  } finally {
+    isConnecting = false;
+  }
 }
 
 export async function POST(request: NextRequest) {
