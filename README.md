@@ -16,6 +16,15 @@ The `/azure-supporter` page allows users to select EN or JP roles which are sync
    - Read Messages/View Channels
 2. Discord OAuth2 application credentials
 
+### Setup Instructions
+
+1. **Copy the environment template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure your `.env` file with the values below**
+
 ### Environment Variables
 
 Add the following to your `.env` file:
