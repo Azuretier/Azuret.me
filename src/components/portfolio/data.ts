@@ -257,8 +257,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
 };
 
 export const SNS_LINKS = [
-  { id: 1, icon: Youtube, label: "YouTube", username: "@yourchannel", href: "https://youtube.com", isStatic: false, followers: "10.5K" },
-  { id: 2, icon: Github, label: "GitHub", username: "@yourusername", href: "https://github.com", isStatic: false, followers: "2.3K" },
+  { id: 1, icon: Youtube, label: "YouTube", username: "@azuret", href: "https://youtube.com", isStatic: false, followers: "10.5K" },
+  { id: 2, icon: Github, label: "GitHub", username: "Azuretier", href: "https://github.com/Azuretier", isStatic: false, followers: "2.3K" },
   { id: 3, icon: Instagram, label: "Instagram", username: "@yourhandle", href: "https://instagram.com", isStatic: false, followers: "5.8K" },
   { id: 4, icon: MessageCircle, label: "Discord", username: "username#0000", href: "#", isStatic: true, followers: "Online" },
 ];
@@ -273,7 +273,7 @@ export const MUSIC_TRACKS = [
 
 export const DISCORD_SERVERS = [
   { id: 1, name: "Azure Supporter", description: "Official support server for Azure Bot", members: "12,847", online: "1,234", icon: "🤖", invite: "https://discord.gg/azure", category: "Bot Support", verified: true, banner: "/api/placeholder/400/100" },
-  { id: 2, name: "Dev Community", description: "A place for developers to hang out and collaborate", members: "5,621", online: "432", icon: "💻", invite: "https://discord.gg/dev", category: "Development", verified: false, banner: "/api/placeholder/400/100" },
+  { id: 2, name: "Developer Page", description: "A place for developers to hang out and collaborate", members: "5,621", online: "432", icon: "💻", invite: "https://discord.com/developers/", category: "Development", verified: false, banner: "/api/placeholder/400/100" },
   { id: 3, name: "Gaming Hub", description: "Play games and make friends from around the world", members: "8,932", online: "2,156", icon: "🎮", invite: "https://discord.gg/gaming", category: "Gaming", verified: true, banner: "/api/placeholder/400/100" },
   { id: 4, name: "Music Lounge", description: "Share and discover new music together", members: "3,456", online: "287", icon: "🎵", invite: "https://discord.gg/music", category: "Music", verified: false, banner: "/api/placeholder/400/100" },
 ];
