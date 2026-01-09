@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHYTHMIA LITE - Loading...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .loader {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner"></div>
+        <div class="message">RHYTHMIA LITE を読み込んでいます...</div>
+        <div id="time-info" style="margin-top: 10px; font-size: 14px; opacity: 0.8;"></div>
+    </div>
+
+    <script>
+        // Time slot configuration
+        const TIME_SLOTS = {
+            morning: {
+                start: 5,  // 5:00
+                end: 11,   // 11:00
+                file: 'morning.html',
+                name: '朝'
+            },
+            day: {
+                start: 11, // 11:00
+                end: 18,   // 18:00
+                file: 'day.html',
+                name: '昼'
+            },
+            night: {
+                start: 18, // 18:00
+                end: 5,    // 5:00 (next day)
+                file: 'night.html',
+                name: '夜'
+            }
+        };
+
+        // Timezone configuration (default: JST / Asia/Tokyo)
+        const TIMEZONE = 'Asia/Tokyo';
+
+        function getCurrentTimeSlot() {
+            // Get current time in JST
+            const now = new Date();
+            const jstTime = new Date(now.toLocaleString('en-US', { timeZone: TIMEZONE }));
+            const hour = jstTime.getHours();
+
+            // Display current time for debugging
+            const timeInfo = document.getElementById('time-info');
+            if (timeInfo) {
+                timeInfo.textContent = `現在時刻 (JST): ${hour}:${jstTime.getMinutes().toString().padStart(2, '0')}`;
+            }
+
+            // Determine time slot
+            if (hour >= TIME_SLOTS.morning.start && hour < TIME_SLOTS.morning.end) {
+                return TIME_SLOTS.morning;
+            } else if (hour >= TIME_SLOTS.day.start && hour < TIME_SLOTS.day.end) {
+                return TIME_SLOTS.day;
+            } else {
+                return TIME_SLOTS.night;
+            }
+        }
+
+        function redirectToTimeSlot() {
+            try {
+                const timeSlot = getCurrentTimeSlot();
+                console.log(`Redirecting to ${timeSlot.name} (${timeSlot.file})`);
+                
+                // Redirect to the appropriate time slot HTML
+                window.location.replace(timeSlot.file);
+            } catch (error) {
+                console.error('Error determining time slot:', error);
+                // Fallback to day.html if there's an error
+                window.location.replace('day.html');
+            }
+        }
+
+        // Execute redirect immediately
+        redirectToTimeSlot();
+    </script>
+</body>
+</html>

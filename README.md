@@ -4,7 +4,24 @@ Explaining current situation below since there are several pages.
 ```cmd
 azuret.net/current: Storing my portfolio (currently in working) 現在制作中（わら）ポートフォリオだぅ
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
+azuret.net/rhythmia: RHYTHMIA LITE rhythm game with time-of-day switching リズムゲーム（時間帯で変わる）
 ```
+
+## RHYTHMIA LITE
+
+A rhythm game that changes based on the time of day in JST (Japan Standard Time).
+
+### Time Slots
+- 🌅 **Morning Mode (朝モード)**: 5:00 - 11:00 JST
+- ☀️ **Day Mode (昼モード)**: 11:00 - 18:00 JST  
+- 🌃 **Night Mode (夜モード)**: 18:00 - 5:00 JST
+
+Visit `/rhythmia` to play! The game will automatically load the appropriate version based on the current JST time.
+
+### How to Play
+- Use the **D**, **F**, and **J** keys to hit notes as they reach the hit zone
+- Build combos for higher scores
+- Each time slot has unique visuals and atmosphere
 
 ## Discord Role Selection Setup
 
