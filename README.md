@@ -2,9 +2,66 @@
 様々なページあるので現在の用途を説明.
 Explaining current situation below since there are several pages.
 ```cmd
+azuret.net/: Interactive homepage with Discord-like messenger UI 対話型ホームページ
 azuret.net/current: Storing my portfolio (currently in working) 現在制作中（わら）ポートフォリオだぅ
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
 ```
+
+## Interactive Homepage
+
+The homepage (`/`) features a modern interactive experience with:
+
+- **GPU-Accelerated Background**: WebGL shader rendering with atmospheric effects, city silhouettes, and fog
+- **Loading Screen**: Smooth animated loading experience with progress indicators
+- **Discord-like Messenger UI**: Chat interface where you can interact with Azur
+- **Intent Router**: Type messages to find social media links (X, YouTube, Discord, GitHub, Instagram)
+
+### Customizing Social Links
+
+Edit `/src/lib/homepage-config.ts` to customize your social media links:
+
+```typescript
+export const HOMEPAGE_CONFIG = {
+  socials: {
+    x: "https://x.com/your_username",
+    youtube: "https://www.youtube.com/@your_channel",
+    discord: {
+      invite: "https://discord.gg/your_invite",
+      serverId: "your_server_id",
+    },
+    github: "https://github.com/your_username",
+    instagram: "https://www.instagram.com/your_username",
+  },
+  owner: {
+    name: "Your Name",
+    displayName: "Your Display Name",
+    greeting: "Your custom greeting message!",
+  },
+};
+```
+
+### GPU Rendering & Fallbacks
+
+The homepage automatically detects GPU capabilities:
+
+1. **WebGL** (Primary): Used on all devices with WebGL support (most modern browsers)
+2. **Static Gradient** (Fallback): Used if WebGL is unavailable
+
+Shader files are located in `/public/shaders/`:
+- `atmospheric.frag` - WebGL fragment shader (GLSL)
+- `atmospheric.wgsl` - WebGPU shader for future use (WGSL)
+
+**Note**: WebGPU is prepared for future implementation but currently uses WebGL for wider browser compatibility.
+
+### Intent Keywords
+
+The intent router recognizes these keywords (edit in `/src/lib/homepage-config.ts`):
+
+- **X/Twitter**: "x", "twitter", "tweet", "tweets"
+- **YouTube**: "youtube", "video", "videos", "yt", "channel"
+- **Discord**: "discord", "server", "chat", "community"
+- **GitHub**: "github", "code", "repos", "repository"
+- **Instagram**: "instagram", "insta", "ig", "photos"
 
 ## Discord Role Selection Setup
 
