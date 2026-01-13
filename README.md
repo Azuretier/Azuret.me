@@ -4,6 +4,7 @@ Explaining current situation below since there are several pages.
 ```cmd
 azuret.net/current: Storing my portfolio (currently in working) 現在制作中（わら）ポートフォリオだぅ
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
+azuret.net/guilds/{guild_id}/rank-card/{display_name}: Real-time Discord rank cards with unicode support
 ```
 
 ## Discord Role Selection Setup
@@ -76,4 +77,23 @@ npm run dev
 ```
 
 Visit `http://localhost:3000/azure-supporter` to use the role selection feature.
+
+## Discord Rank Card System
+
+The rank card system provides real-time, public-facing rank cards for Discord server members.
+
+**Features:**
+- Unicode-safe display name handling
+- Real-time updates via Firestore `onSnapshot`
+- Modern glass morphism UI with gradient effects
+- Support for avatars, levels, XP, and rank names
+- Handles edge cases (not found, ambiguous matches)
+
+**Setup:**
+See [RANK_CARD_SETUP.md](./RANK_CARD_SETUP.md) for detailed configuration instructions.
+
+**Quick Start:**
+1. Configure Firebase Admin and client credentials in `.env`
+2. Set up Firestore with `guilds/{guildId}/members` collection
+3. Visit `/guilds/{guildId}/rank-card/{displayName}`
 
