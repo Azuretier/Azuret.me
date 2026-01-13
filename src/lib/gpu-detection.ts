@@ -10,7 +10,8 @@ export async function detectGPUCapability(): Promise<GPUCapability> {
   // Check for WebGPU (modern browsers, desktop)
   if (typeof navigator !== "undefined" && "gpu" in navigator) {
     try {
-      const adapter = await navigator.gpu.requestAdapter();
+      const gpu = (navigator as any).gpu;
+      const adapter = await gpu.requestAdapter();
       if (adapter) {
         return "webgpu";
       }

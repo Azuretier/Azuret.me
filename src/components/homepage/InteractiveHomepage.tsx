@@ -20,7 +20,7 @@ export default function InteractiveHomepage() {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Initializing");
-  const [gpuCapability, setGpuCapability] = useState<GPUCapability>("none");
+  const [gpuCapability, setGpuCapability] = useState<GPUCapability | null>(null);
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
 
   useEffect(() => {
@@ -76,11 +76,17 @@ export default function InteractiveHomepage() {
   }, [backgroundLoaded, progress]);
 
   const handleBackgroundLoaded = () => {
+    console.log("Background loaded");
     setBackgroundLoaded(true);
   };
 
   // Render appropriate background based on GPU capability
   const renderBackground = () => {
+    // Wait for GPU detection to complete
+    if (gpuCapability === null) {
+      return null;
+    }
+    
     // For WebGPU (desktop) or WebGL (mobile/fallback), use WebGL shader
     // Note: WebGPU implementation would require more complex setup
     // For now, we'll use WebGL for both as it's more widely supported
@@ -88,7 +94,7 @@ export default function InteractiveHomepage() {
       return <WebGLBackground onLoaded={handleBackgroundLoaded} />;
     }
 
-    // Static gradient fallback
+    // Static gradient fallback for no GPU support
     return <StaticBackground onLoaded={handleBackgroundLoaded} />;
   };
 

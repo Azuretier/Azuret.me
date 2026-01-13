@@ -72,17 +72,25 @@ export function parseIntent(userInput: string): IntentResult {
 
   // Find the highest scoring destination
   let maxScore = 0;
-  let destination: IntentDestination = "unknown";
+  let bestDestination: Exclude<IntentDestination, "unknown"> | null = null;
 
-  (Object.keys(scores) as IntentDestination[]).forEach((key) => {
-    if (scores[key] > maxScore && key !== "unknown") {
+  const destinations: Array<Exclude<IntentDestination, "unknown">> = [
+    "x",
+    "youtube",
+    "discord",
+    "github",
+    "instagram",
+  ];
+
+  destinations.forEach((key) => {
+    if (scores[key] > maxScore) {
       maxScore = scores[key];
-      destination = key;
+      bestDestination = key;
     }
   });
 
   // Return result based on destination
-  if (destination === "x") {
+  if (bestDestination === "x") {
     return {
       destination: "x",
       url: HOMEPAGE_CONFIG.socials.x,
@@ -91,7 +99,7 @@ export function parseIntent(userInput: string): IntentResult {
     };
   }
 
-  if (destination === "youtube") {
+  if (bestDestination === "youtube") {
     return {
       destination: "youtube",
       url: HOMEPAGE_CONFIG.socials.youtube,
@@ -100,7 +108,7 @@ export function parseIntent(userInput: string): IntentResult {
     };
   }
 
-  if (destination === "discord") {
+  if (bestDestination === "discord") {
     return {
       destination: "discord",
       url: HOMEPAGE_CONFIG.socials.discord.invite,
@@ -109,7 +117,7 @@ export function parseIntent(userInput: string): IntentResult {
     };
   }
 
-  if (destination === "github") {
+  if (bestDestination === "github") {
     return {
       destination: "github",
       url: HOMEPAGE_CONFIG.socials.github,
@@ -118,7 +126,7 @@ export function parseIntent(userInput: string): IntentResult {
     };
   }
 
-  if (destination === "instagram") {
+  if (bestDestination === "instagram") {
     return {
       destination: "instagram",
       url: HOMEPAGE_CONFIG.socials.instagram,

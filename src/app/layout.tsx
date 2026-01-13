@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Inter, VT323 } from "next/font/google";
+// import { Inter, VT323 } from "next/font/google";
 import "./globals.css"; //apply style
 import React from 'react'
 
@@ -17,16 +17,17 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  variable: "--font-sans", // Maps to var(--font-sans) in CSS
-});
+// Temporarily disabled due to network restrictions
+// const inter = Inter({ 
+//   subsets: ["latin"],
+//   variable: "--font-sans", // Maps to var(--font-sans) in CSS
+// });
 
-const vt323 = VT323({ 
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-pixel", // Maps to var(--font-pixel) in CSS
-});
+// const vt323 = VT323({ 
+//   weight: "400",
+//   subsets: ["latin"],
+//   variable: "--font-pixel", // Maps to var(--font-pixel) in CSS
+// });
 
 export const metadata: Metadata = {
   title: 'azuret.me',
@@ -45,7 +46,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     <html lang='ja'>
       <meta name="theme-color" content="#ffbd43"></meta>
       <link rel="icon" href="/favicon.ico" />
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${vt323.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Provider>
           {children}
         </Provider>
