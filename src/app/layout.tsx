@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Inter, VT323 } from "next/font/google";
 import "./globals.css"; //apply style
 import React from 'react'
 
@@ -10,22 +9,13 @@ const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
+  fallback: ["system-ui", "arial"],
 });
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
-});
-
-const inter = Inter({ 
-  subsets: ["latin"],
-  variable: "--font-sans", // Maps to var(--font-sans) in CSS
-});
-
-const vt323 = VT323({ 
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-pixel", // Maps to var(--font-pixel) in CSS
+  fallback: ["monospace"],
 });
 
 export const metadata: Metadata = {
@@ -45,7 +35,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     <html lang='ja'>
       <meta name="theme-color" content="#ffbd43"></meta>
       <link rel="icon" href="/favicon.ico" />
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${vt323.variable} antialiased`}>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=VT323&display=swap" rel="stylesheet" />
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ fontFamily: 'Inter, system-ui, arial, sans-serif' }}>
         <Provider>
           {children}
         </Provider>
