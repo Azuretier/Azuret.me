@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 const roles = {
@@ -20,7 +20,7 @@ const roles = {
   }
 };
 
-export default function AzureSupporterPage() {
+function AzureSupporterContent() {
   const searchParams = useSearchParams();
   const [discordUserId, setDiscordUserId] = useState<string | null>(null);
   const [discordUsername, setDiscordUsername] = useState<string | null>(null);
@@ -260,5 +260,18 @@ export default function AzureSupporterPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+
+export default function AzureSupporterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    }>
+      <AzureSupporterContent />
+    </Suspense>
   );
 }
