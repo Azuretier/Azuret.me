@@ -1,3 +1,13 @@
+import { cn } from '@/lib/utils';
+
+// XP Calculation Configuration
+const XP_CONFIG = {
+  // XP required per level (linear: level * baseXpPerLevel)
+  baseXpPerLevel: 1000,
+  // Alternative: Could implement exponential scaling here
+  calculateXpForLevel: (level: number): number => level * 1000,
+};
+
 interface RankCardProps {
   displayName: string;
   level: number;
