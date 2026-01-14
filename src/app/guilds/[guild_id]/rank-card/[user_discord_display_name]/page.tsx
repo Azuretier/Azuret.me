@@ -121,6 +121,8 @@ export default function RankCardPage({ params }: PageProps) {
               xpToNext={cardData.xpToNext}
               rankName={cardData.rankName}
               avatarUrl={cardData.avatarUrl}
+              guildId={params.guild_id}
+              patreonUrl={process.env.NEXT_PUBLIC_PATREON_URL}
             />
           );
         }

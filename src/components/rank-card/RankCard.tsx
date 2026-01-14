@@ -5,6 +5,8 @@ interface RankCardProps {
   xpToNext: number;
   rankName?: string;
   avatarUrl?: string;
+  guildId?: string;
+  patreonUrl?: string;
 }
 
 export default function RankCard({
@@ -14,6 +16,8 @@ export default function RankCard({
   xpToNext,
   rankName,
   avatarUrl,
+  guildId,
+  patreonUrl,
 }: RankCardProps) {
   // Calculate progress percentage
   const totalXpForLevel = xp + xpToNext;
@@ -21,7 +25,7 @@ export default function RankCard({
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      <div className="relative w-full max-w-2xl">
+      <div className="relative w-full max-w-2xl space-y-6">
         {/* Gradient mesh background */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-pink-500/20 to-blue-500/20 rounded-3xl blur-3xl" />
         
@@ -101,6 +105,39 @@ export default function RankCard({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Action buttons and Discord server widget */}
+        <div className="flex flex-col md:flex-row gap-4 items-stretch">
+          {/* Patreon link */}
+          {patreonUrl && (
+            <a
+              href={patreonUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.386.524c-4.764 0-8.64 3.876-8.64 8.64 0 4.75 3.876 8.613 8.64 8.613 4.75 0 8.614-3.864 8.614-8.613C24 4.4 20.136.524 15.386.524M.003 23.537h4.22V.524H.003"/>
+              </svg>
+              <span className="text-white font-semibold text-lg">Support on Patreon</span>
+            </a>
+          )}
+
+          {/* Discord server widget */}
+          {guildId && (
+            <div className="flex-1 overflow-hidden rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg">
+              <iframe
+                src={`https://discord.com/widget?id=${guildId}&theme=dark`}
+                width="100%"
+                height="300"
+                allowTransparency={true}
+                frameBorder="0"
+                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+                className="w-full"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

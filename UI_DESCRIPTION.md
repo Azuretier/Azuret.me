@@ -230,6 +230,15 @@
 │   │                                          │   │
 │   └──────────────────────────────────────────┘   │
 │                                                    │
+│   ┌──────────────┐  ┌──────────────────────┐    │
+│   │  [Patreon]  │  │  Discord Widget      │    │
+│   │   Support   │  │  ┌────────────────┐  │    │
+│   │    Button   │  │  │ 5 Online       │  │    │
+│   └──────────────┘  │  │ 20 Members     │  │    │
+│                     │  │ #general       │  │    │
+│                     │  └────────────────┘  │    │
+│                     └──────────────────────┘    │
+│                                                    │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -328,6 +337,45 @@
 4. **Hover Effects:**
    - Subtle scale or opacity changes
    - 200ms transition
+
+#### Patreon Button (Optional)
+- **Display**: Conditional on `NEXT_PUBLIC_PATREON_URL` environment variable
+- **Layout**: Flex-1, fills half of row on desktop, full width on mobile
+- **Background**: Gradient Orange-500 to Red-500
+- **Hover**: Orange-600 to Red-600 with scale-105 transform
+- **Icon**: Patreon logo SVG (24px × 24px)
+- **Text**: "Support on Patreon" in White, semibold, lg size
+- **Padding**: 24px (6) horizontal, 16px (4) vertical
+- **Border Radius**: 2xl (1rem)
+- **Shadow**: lg shadow, xl on hover
+- **Animation**: 300ms transition, subtle scale on hover
+- **Link**: Opens in new tab with `noopener noreferrer`
+
+#### Discord Server Widget (Always shown)
+- **Display**: Always displayed using guild_id from URL
+- **Layout**: Flex-1, fills half of row on desktop, full width on mobile
+- **Container**: Glass card styling with White/5 background
+- **Border**: White/10 opacity, 1px
+- **Border Radius**: 2xl (1rem)
+- **Shadow**: lg shadow
+- **iframe Source**: `https://discord.com/widget?id={guildId}&theme=dark`
+- **Width**: 100% (responsive)
+- **Height**: 300px fixed
+- **Theme**: Dark mode
+- **Sandbox**: Secure with limited permissions
+  - `allow-popups`: For Discord invite links
+  - `allow-popups-to-escape-sandbox`: Allow navigation
+  - `allow-same-origin`: Required for Discord widget
+  - `allow-scripts`: Required for widget functionality
+- **Features**: Shows online members, member count, voice channels
+
+#### Action Section Layout
+- **Container**: Flex column on mobile, flex row on desktop (md breakpoint)
+- **Gap**: 16px (4) between items
+- **Items**: Stretch to equal height
+- **Responsive**:
+  - Mobile: Stack vertically, full width each
+  - Desktop: Side by side, equal width (flex-1)
 
 ## 3. Not Found State
 

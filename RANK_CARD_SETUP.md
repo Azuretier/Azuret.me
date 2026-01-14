@@ -49,6 +49,23 @@ Add this to your `.env` file for Firebase Admin SDK:
 FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
 ```
 
+### Optional Configuration
+
+**Patreon Integration** (Optional):
+
+To display a Patreon support button on rank cards:
+
+```bash
+NEXT_PUBLIC_PATREON_URL='https://www.patreon.com/your_username'
+```
+
+**Discord Server Widget**:
+
+The Discord server widget will automatically display using the guild ID from the URL. Ensure your Discord server has the widget enabled:
+1. Go to Discord Server Settings → Widget
+2. Enable "Enable Server Widget"
+3. The widget will use the theme "dark" and display online members
+
 **How to get service account JSON:**
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
@@ -161,6 +178,9 @@ The rank card includes:
 - Animated XP progress bar
 - User avatar with fallback to initial letter
 - Level badge
+- **Patreon support button** (when `NEXT_PUBLIC_PATREON_URL` is configured)
+- **Discord server widget** showing online members and invite link
+- Responsive design
 - Rank name display
 - Responsive design
 
