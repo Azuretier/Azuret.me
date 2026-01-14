@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import LoadingScreen from "./LoadingScreen";
 import VersionSelector from "../version/VersionSelector";
 import VersionSwitcher from "../version/VersionSwitcher";
@@ -21,7 +22,10 @@ const WebGLBackground = dynamic(() => import("./WebGLBackground"), {
 });
 
 export default function InteractiveHomepage() {
+  const router = useRouter();
+  const { currentVersion, setVersion, isVersionSelected } = useVersion();
   const [loading, setLoading] = useState(true);
+  const [showVersionSelector, setShowVersionSelector] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Initializing");
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
@@ -88,7 +92,18 @@ export default function InteractiveHomepage() {
         }
       }, 800);
     }
-  }, [backgroundLoaded, progress]);
+  }, [backgroundLoaded, progress, isVersionSelected]);
+
+  const handleVersionSelect = (version: AppVersion) => {
+    setVersion(version);
+    setShowVersionSelector(false);
+    
+    // Route to appropriate page based on version
+    if (version === '1.0.1') {
+      router.push('/current');
+    }
+    // For v1.0.0, stay on current page (which shows MessengerUI)
+  };
 
   const handleBackgroundLoaded = () => {
     console.log("Background loaded");
