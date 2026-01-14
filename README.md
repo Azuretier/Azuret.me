@@ -9,6 +9,7 @@ azuret.net/current: Storing my portfolio (currently in working) 現在制作中�
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
 azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system with real-time Firebase data
 azuret.net/play: Multiplayer Score Attack game with real-time WebSocket gameplay
+azuret.net/rhythmia-nexus-multiplayer.html: RHYTHMIA NEXUS BATTLE ARENA - Standalone multiplayer lobby
 ```
 
 ## Version Selection
@@ -54,6 +55,36 @@ A real-time multiplayer game with host/join functionality and synchronized gamep
 - **Security**: Origin validation, room code validation, payload sanitization
 
 **📖 Deployment Guide**: See [MULTIPLAYER_DEPLOYMENT.md](./MULTIPLAYER_DEPLOYMENT.md) for step-by-step instructions on deploying to Vercel + Railway.
+
+### 1b. RHYTHMIA NEXUS "BATTLE ARENA" (`/rhythmia-nexus-multiplayer.html`)
+
+A standalone HTML multiplayer lobby with neon aesthetic and Firestore integration.
+
+#### Key Features
+- **Tabbed Lobby UI**: Room List and Create Room tabs
+- **Room Browsing**: Browse and join available rooms with one click
+- **Firestore Persistence**: Optional room database for cross-instance consistency
+- **Room Cleanup**: Automatic TTL-based cleanup of stale rooms
+- **Neon Aesthetic**: Orbitron font with purple/cyan glow effects
+- **Real-time Updates**: WebSocket-based live room list and player status
+- **Host/Join Flow**: Create rooms with custom names or join existing ones
+
+#### How to Use
+1. Start the WebSocket server: `npm run multiplayer`
+2. Open `public/rhythmia-nexus-multiplayer.html` in browser
+3. **Create Room**: Enter your name and room name, click Create Room
+4. **Join Room**: Browse room list, click on a room to join
+5. **Ready Up**: Non-host players click "Ready Up"
+6. **Start Game**: Host starts game when all players are ready
+
+#### Technical Details
+- **Frontend**: Standalone HTML with vanilla JavaScript and WebSocket client
+- **Backend**: Same WebSocket server as `/play`, with Firestore integration
+- **Persistence**: Optional Firestore database for room storage
+- **Protocol**: Extended protocol with `list_rooms` support
+- **Styling**: Neon/cyberpunk theme with Orbitron font
+
+**📖 Setup Guide**: See [RHYTHMIA_MULTIPLAYER_SETUP.md](./RHYTHMIA_MULTIPLAYER_SETUP.md) for complete setup instructions including Firestore configuration.
 
 ### 2. Interactive Homepage (`/`)
 
