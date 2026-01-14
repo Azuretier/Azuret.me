@@ -21,10 +21,11 @@ export default function FloatingVersionSwitcher() {
     setIsOpen(false);
     
     // Navigate to the appropriate page
+    // Use window.location.href for full reload to ensure clean state
     if (version === '1.0.0') {
       window.location.href = '/';
     } else if (version === '1.0.1') {
-      router.push('/current');
+      window.location.href = '/current';
     }
   };
 

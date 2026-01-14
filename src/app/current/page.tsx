@@ -1383,8 +1383,8 @@ const VersionSwitcherSection = memo(({ theme, isDarkMode }: { theme: any; isDark
     // Navigate to the appropriate page
     if (version === '1.0.0') {
       router.push('/');
-    } else if (version === '1.0.1') {
-      // Already on /current, just reload or stay
+    } else if (version === '1.0.1' && currentVersion !== '1.0.1') {
+      // Only reload if switching from a different version
       window.location.reload();
     }
   };
