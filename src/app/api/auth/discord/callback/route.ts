@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     // Exchange code for access token
     const clientId = process.env.DISCORD_CLIENT_ID;
     const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-    const redirectUri = process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI;
+    const redirectUri = process.env.NEXT_PUBLIC_AZURE_SUPPORTER_REDIRECT_URI;
 
     if (!clientId || !clientSecret || !redirectUri) {
       return NextResponse.redirect(

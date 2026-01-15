@@ -92,7 +92,7 @@ function AzureSupporterContent() {
   };
 
   const handleDiscordLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+    const clientId = process.env.NEXT_PUBLIC_AZURE_SUPPORTER_CLIENT_ID;
     
     if (!clientId) {
       setStatus({ 
@@ -104,7 +104,7 @@ function AzureSupporterContent() {
     }
     
     const redirectUri = encodeURIComponent(
-      process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI || 
+      process.env.NEXT_PUBLIC_AZURE_SUPPORTER_REDIRECT_URI || 
       `${window.location.origin}/api/auth/discord/callback`
     );
     const scope = 'identify';
