@@ -163,8 +163,8 @@ DISCORD_ROLE_JP='your_jp_role_id'
 # Discord OAuth2 Configuration
 DISCORD_CLIENT_ID='your_discord_client_id'
 DISCORD_CLIENT_SECRET='your_discord_client_secret'
-NEXT_PUBLIC_DISCORD_CLIENT_ID='your_discord_client_id'
-NEXT_PUBLIC_DISCORD_REDIRECT_URI='http://localhost:3000/api/auth/discord/callback'
+NEXT_PUBLIC_AZURE_SUPPORTER_CLIENT_ID='your_discord_client_id'
+NEXT_PUBLIC_AZURE_SUPPORTER_REDIRECT_URI='http://localhost:3000/api/auth/discord/callback'
 ```
 
 ### Getting Discord IDs

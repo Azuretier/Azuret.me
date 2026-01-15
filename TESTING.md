@@ -39,8 +39,8 @@ DISCORD_ROLE_EN='your_actual_en_role_id'
 DISCORD_ROLE_JP='your_actual_jp_role_id'
 DISCORD_CLIENT_ID='your_actual_client_id'
 DISCORD_CLIENT_SECRET='your_actual_client_secret'
-NEXT_PUBLIC_DISCORD_CLIENT_ID='your_actual_client_id'
-NEXT_PUBLIC_DISCORD_REDIRECT_URI='http://localhost:3000/api/auth/discord/callback'
+NEXT_PUBLIC_AZURE_SUPPORTER_CLIENT_ID='your_actual_client_id'
+NEXT_PUBLIC_AZURE_SUPPORTER_REDIRECT_URI='http://localhost:3000/api/auth/discord/callback'
 ```
 
 ## Test Scenarios
@@ -109,7 +109,7 @@ NEXT_PUBLIC_DISCORD_REDIRECT_URI='http://localhost:3000/api/auth/discord/callbac
 ### Issue: OAuth callback fails
 - **Solution**: 
   - Verify redirect URI matches exactly in Discord Developer Portal
-  - Check NEXT_PUBLIC_DISCORD_REDIRECT_URI in .env
+  - Check NEXT_PUBLIC_AZURE_SUPPORTER_REDIRECT_URI in .env
   - Ensure DISCORD_CLIENT_SECRET is correct
 
 ## API Testing with curl

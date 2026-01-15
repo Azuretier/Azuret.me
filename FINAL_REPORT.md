@@ -147,7 +147,7 @@ Successfully implemented a complete Discord role selection feature for the Azure
 
 6. **Deploy to Production**
    - Update redirect URI in Discord OAuth2 settings
-   - Update NEXT_PUBLIC_DISCORD_REDIRECT_URI in .env
+   - Update NEXT_PUBLIC_AZURE_SUPPORTER_REDIRECT_URI in .env
    - Deploy and test
 
 ## Technical Highlights
