@@ -139,7 +139,12 @@ function handleMessage(playerId: string, data: string): void {
           roomManager.removePlayerFromRoom(playerId);
         }
 
-        const { roomCode, player } = roomManager.createRoom(playerId, message.playerName);
+        const { roomCode, player } = roomManager.createRoom(
+          playerId, 
+          message.playerName,
+          (message as any).roomName,
+          (message as any).isPublic !== false
+        );
         
         // Generate reconnect token
         const reconnectToken = generateReconnectToken();
@@ -208,7 +213,7 @@ function handleMessage(playerId: string, data: string): void {
           type: 'joined_room',
           roomCode: message.roomCode,
           playerId: result.player!.id,
-          roomState,
+          roomState: roomState as any,
           reconnectToken,
         } as any);
 
@@ -217,11 +222,7 @@ function handleMessage(playerId: string, data: string): void {
           message.roomCode,
           {
             type: 'player_joined',
-            player: {
-              ...result.player!,
-              isHost: result.player!.isHost ?? false,
-              isReady: result.player!.isReady ?? false,
-            },
+            player: result.player!,
           },
           playerId
         );
@@ -371,6 +372,15 @@ function handleMessage(playerId: string, data: string): void {
 
           console.log(`[GAME] Started in room ${roomCode}`);
         }
+        break;
+      }
+
+      case 'get_rooms': {
+        const publicRooms = roomManager.getPublicRooms();
+        sendToPlayer(playerId, {
+          type: 'room_list',
+          rooms: publicRooms,
+        } as any);
         break;
       }
 

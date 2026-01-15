@@ -2108,6 +2108,7 @@
             justify-content: center;
             gap: 25px;
             padding: 20px;
+            position: relative;
         }
         .online-lobby.active { display: flex; }
 
@@ -2140,6 +2141,407 @@
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
+        }
+
+        /* Name Entry Screen */
+        .name-entry-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .name-entry-screen.hidden { display: none; }
+
+        .name-entry-title {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.8);
+            font-family: sans-serif;
+        }
+
+        .name-entry-input {
+            padding: 15px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: white;
+            width: 280px;
+        }
+
+        .name-entry-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 20px rgba(255,215,0,0.3);
+        }
+
+        .name-entry-btn {
+            padding: 15px 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gold), #FF6B35);
+            border: none;
+            border-radius: 30px;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .name-entry-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--gold);
+        }
+
+        .name-entry-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Room Browser Screen */
+        .room-browser-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .room-browser-screen.active { display: flex; }
+
+        .player-name-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .player-name-badge span {
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        /* Tab Widget */
+        .tab-widget {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tab-header {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            color: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--p1-color);
+            background: rgba(78,205,196,0.1);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--p1-color);
+        }
+
+        .tab-content {
+            padding: 20px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* Create Room Tab */
+        .create-room-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            font-family: sans-serif;
+        }
+
+        .form-input {
+            padding: 12px 16px;
+            font-family: sans-serif;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--p1-color);
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+
+        .toggle-label {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+            font-family: sans-serif;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: var(--p1-color);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+
+        .create-room-btn {
+            padding: 15px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--p1-color), #2dd4bf);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .create-room-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--p1-glow);
+        }
+
+        /* Room List Tab */
+        .room-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .room-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .room-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .room-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+
+        .room-list::-webkit-scrollbar-thumb {
+            background: var(--p1-color);
+            border-radius: 3px;
+        }
+
+        .room-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .room-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--p1-color);
+        }
+
+        .room-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .room-item-name {
+            font-weight: 700;
+            color: white;
+        }
+
+        .room-item-host {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            font-family: sans-serif;
+        }
+
+        .room-item-players {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: var(--p1-color);
+        }
+
+        .room-list-empty {
+            text-align: center;
+            padding: 30px;
+            color: rgba(255,255,255,0.4);
+            font-family: sans-serif;
+        }
+
+        .room-list-divider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+
+        .room-list-divider::before,
+        .room-list-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .room-list-divider span {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.4);
+            font-family: sans-serif;
+        }
+
+        .code-join-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .code-input {
+            flex: 1;
+            padding: 12px 16px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: var(--p1-color);
+        }
+
+        .code-join-btn {
+            padding: 12px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--p2-color), #f472b6);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .code-join-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px var(--p2-glow);
+        }
+
+        .refresh-btn {
+            padding: 10px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            align-self: flex-end;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.2);
         }
 
         .online-options {
@@ -2813,19 +3215,70 @@
             <span id="statusText">未接続</span>
         </div>
 
-        <div class="room-input-group">
-            <input type="text" class="name-input" id="playerNameInput" placeholder="あなたの名前" maxlength="12">
+        <!-- Step 1: Name Entry -->
+        <div class="name-entry-screen" id="nameEntryScreen">
+            <div class="name-entry-title">プレイヤー名を入力してください</div>
+            <input type="text" class="name-entry-input" id="playerNameInput" placeholder="名前を入力" maxlength="12">
+            <button class="name-entry-btn" id="nameEntryBtn" onclick="submitPlayerName()">
+                次へ →
+            </button>
         </div>
 
-        <div class="online-options">
-            <button class="online-btn" id="createRoomBtn" onclick="createRoom()">
-                🏠 ルームを作成
-            </button>
-            <div class="room-input-group">
-                <input type="text" class="room-input" id="roomCodeInput" placeholder="CODE" maxlength="4">
-                <button class="online-btn" id="joinRoomBtn" onclick="joinRoom()">
-                    🔍 ルームを検索
-                </button>
+        <!-- Step 2: Room Browser -->
+        <div class="room-browser-screen" id="roomBrowserScreen">
+            <div class="player-name-badge">
+                👤 <span id="displayPlayerName">Player</span>
+                <button style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.8rem;" onclick="editPlayerName()">✏️</button>
+            </div>
+
+            <div class="tab-widget">
+                <div class="tab-header">
+                    <button class="tab-btn active" onclick="switchTab('create')" id="tabCreate">🏠 ルーム作成</button>
+                    <button class="tab-btn" onclick="switchTab('list')" id="tabList">📋 ルームリスト</button>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Create Room Tab -->
+                    <div class="tab-pane active" id="paneCreate">
+                        <div class="create-room-form">
+                            <div class="form-group">
+                                <label class="form-label">部屋名</label>
+                                <input type="text" class="form-input" id="roomNameInput" placeholder="バトルルーム" maxlength="20">
+                            </div>
+                            
+                            <div class="toggle-group">
+                                <span class="toggle-label">ルームリストに公開する</span>
+                                <div class="toggle-switch active" id="publicToggle" onclick="togglePublic()"></div>
+                            </div>
+                            
+                            <button class="create-room-btn" onclick="createRoom()">
+                                ✨ ルームを作成
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Room List Tab -->
+                    <div class="tab-pane" id="paneList">
+                        <div class="room-list-container">
+                            <button class="refresh-btn" onclick="refreshRoomList()">🔄 更新</button>
+                            
+                            <div class="room-list" id="roomList">
+                                <div class="room-list-empty">
+                                    ルームを検索中...
+                                </div>
+                            </div>
+
+                            <div class="room-list-divider">
+                                <span>または</span>
+                            </div>
+
+                            <div class="code-join-group">
+                                <input type="text" class="code-input" id="roomCodeInput" placeholder="CODE" maxlength="4">
+                                <button class="code-join-btn" onclick="joinRoomByCode()">参加</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2973,6 +3426,12 @@
         let isReady = false;
         let roomPlayers = [];
         let myPlayerSlot = null; // 'p1' or 'p2'
+        
+        // New lobby state
+        let playerName = '';
+        let isPublicRoom = true;
+        let roomName = '';
+        let publicRooms = [];
         
         // Stability features
         let reconnectToken = null;
@@ -3266,6 +3725,10 @@
                     updateRoomState(msg.roomState);
                     break;
 
+                case 'room_list':
+                    renderRoomList(msg.rooms);
+                    break;
+
                 case 'player_joined':
                     playTone(880, 0.1, 'triangle');
                     break;
@@ -3375,6 +3838,7 @@
         }
 
         // ===== Online Lobby =====
+        // ===== Online Lobby UI =====
         async function showOnlineLobby() {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('onlineLobby').classList.add('active');
@@ -3383,11 +3847,106 @@
             reconnectAttempts = 0;
             isReconnecting = false;
             
+            // Show name entry screen first
+            document.getElementById('nameEntryScreen').classList.remove('hidden');
+            document.getElementById('roomBrowserScreen').classList.remove('active');
+            
+            // Load saved name if exists
+            const savedName = localStorage.getItem('rhythmia_player_name') || '';
+            document.getElementById('playerNameInput').value = savedName;
+            
             try {
                 await connectWebSocket();
             } catch (e) {
                 showError('サーバーに接続できません。URLを確認してください。');
             }
+        }
+
+        function submitPlayerName() {
+            const nameInput = document.getElementById('playerNameInput');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                showError('名前を入力してください');
+                nameInput.focus();
+                return;
+            }
+            
+            playerName = name;
+            localStorage.setItem('rhythmia_player_name', name);
+            
+            // Hide name entry, show room browser
+            document.getElementById('nameEntryScreen').classList.add('hidden');
+            document.getElementById('roomBrowserScreen').classList.add('active');
+            document.getElementById('displayPlayerName').textContent = playerName;
+            
+            // Auto-refresh room list
+            refreshRoomList();
+            
+            playTone(880, 0.1, 'triangle');
+        }
+
+        function editPlayerName() {
+            document.getElementById('roomBrowserScreen').classList.remove('active');
+            document.getElementById('nameEntryScreen').classList.remove('hidden');
+            document.getElementById('playerNameInput').focus();
+        }
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+            document.getElementById('tabList').classList.toggle('active', tab === 'list');
+            
+            // Update tab panes
+            document.getElementById('paneCreate').classList.toggle('active', tab === 'create');
+            document.getElementById('paneList').classList.toggle('active', tab === 'list');
+            
+            if (tab === 'list') {
+                refreshRoomList();
+            }
+            
+            playTone(523, 0.05);
+        }
+
+        function togglePublic() {
+            isPublicRoom = !isPublicRoom;
+            document.getElementById('publicToggle').classList.toggle('active', isPublicRoom);
+        }
+
+        function refreshRoomList() {
+            const listEl = document.getElementById('roomList');
+            listEl.innerHTML = '<div class="room-list-empty">ルームを検索中...</div>';
+            
+            // Request room list from server
+            sendMessage({ type: 'get_rooms' });
+        }
+
+        function renderRoomList(rooms) {
+            const listEl = document.getElementById('roomList');
+            publicRooms = rooms || [];
+            
+            if (publicRooms.length === 0) {
+                listEl.innerHTML = '<div class="room-list-empty">公開ルームがありません</div>';
+                return;
+            }
+            
+            listEl.innerHTML = publicRooms.map(room => \`
+                <div class="room-item" onclick="joinRoomFromList('\${room.code}')">
+                    <div class="room-item-info">
+                        <div class="room-item-name">\${escapeHtml(room.name || 'バトルルーム')}</div>
+                        <div class="room-item-host">ホスト: \${escapeHtml(room.hostName || 'Player')}</div>
+                    </div>
+                    <div class="room-item-players">
+                        👥 \${room.playerCount}/2
+                    </div>
+                </div>
+            \`).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function backToMainLobby() {
@@ -3402,6 +3961,10 @@
             reconnectToken = null;
             roomCode = null;
             
+            // Reset UI state
+            document.getElementById('nameEntryScreen').classList.remove('hidden');
+            document.getElementById('roomBrowserScreen').classList.remove('active');
+            
             document.getElementById('onlineLobby').classList.remove('active');
             document.getElementById('waitingRoom').classList.remove('active');
             document.getElementById('lobby').style.display = 'flex';
@@ -3412,31 +3975,49 @@
         }
 
         async function createRoom() {
-            const name = document.getElementById('playerNameInput').value.trim() || 'Player';
+            roomName = document.getElementById('roomNameInput').value.trim() || 'バトルルーム';
             
             try {
                 await connectWebSocket();
-                sendMessage({ type: 'create_room', playerName: name });
+                sendMessage({ 
+                    type: 'create_room', 
+                    playerName: playerName,
+                    roomName: roomName,
+                    isPublic: isPublicRoom
+                });
             } catch (e) {
                 showError('接続エラー');
             }
         }
 
-        async function joinRoom() {
+        async function joinRoomByCode() {
             const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-            const name = document.getElementById('playerNameInput').value.trim() || 'Player';
             
             if (code.length !== 4) {
-                showError('ルームコードを入力してください');
+                showError('4文字のルームコードを入力してください');
                 return;
             }
 
             try {
                 await connectWebSocket();
-                sendMessage({ type: 'join_room', roomCode: code, playerName: name });
+                sendMessage({ type: 'join_room', roomCode: code, playerName: playerName });
             } catch (e) {
                 showError('接続エラー');
             }
+        }
+
+        async function joinRoomFromList(code) {
+            try {
+                await connectWebSocket();
+                sendMessage({ type: 'join_room', roomCode: code, playerName: playerName });
+            } catch (e) {
+                showError('接続エラー');
+            }
+        }
+
+        // Keep for backwards compatibility
+        async function joinRoom() {
+            await joinRoomByCode();
         }
 
         function showWaitingRoom() {
@@ -4124,6 +4705,28 @@
                     else if (e.key === 'ArrowUp') rotatePiece('p2', 'p2Board');
                     else if (e.key === 'Enter') { e.preventDefault(); hardDrop('p2', 'p2Board', 'p1'); }
                 }
+            }
+        });
+
+        // Enter key handlers for lobby inputs
+        document.getElementById('playerNameInput')?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitPlayerName();
+            }
+        });
+
+        document.getElementById('roomCodeInput')?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                joinRoomByCode();
+            }
+        });
+
+        document.getElementById('roomNameInput')?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                createRoom();
             }
         });
 
