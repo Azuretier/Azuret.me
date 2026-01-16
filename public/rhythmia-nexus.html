@@ -3860,8 +3860,8 @@
             reconnectAttempts++;
             
             const delay = RECONNECT_DELAY_BASE * Math.pow(2, reconnectAttempts - 1);
-            console.log(\`[WS] Reconnecting in \${delay}ms (attempt \${reconnectAttempts}/\${MAX_RECONNECT_ATTEMPTS})\`);
-            showInfo(\`再接続中... (\${reconnectAttempts}/\${MAX_RECONNECT_ATTEMPTS})\`);
+            console.log('[WS] Reconnecting in ' + delay + 'ms (attempt ' + reconnectAttempts + '/' + MAX_RECONNECT_ATTEMPTS + ')');
+            showInfo('再接続中... (' + reconnectAttempts + '/' + MAX_RECONNECT_ATTEMPTS + ')');
 
             reconnectTimer = setTimeout(async () => {
                 try {
