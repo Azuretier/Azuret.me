@@ -124,7 +124,7 @@ export default function MultiplayerGame() {
   const handleNameSubmit = useCallback(() => {
     if (playerName.trim().length < 2) return;
     if (!isAuthenticated) {
-      setError('認証中です。しばらくお待ちください。');
+      setError('認証が完了していません。もう一度お試しください。');
       return;
     }
     // playerIdRef.current is already set by onAuthStateChanged
