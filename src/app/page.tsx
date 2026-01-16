@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import styles from './rhythmia.module.css';
-import VanillaGame from './components/VanillaGame';
-import MultiplayerGame from './components/MultiplayerGame';
-import LifeJourney from './components/LifeJourney';
+import styles from '../components/rhythmia.module.css';
+import VanillaGame from '../components/rhythmia/VanillaGame';
+import MultiplayerGame from '../components/rhythmia/MultiplayerGame';
+import LifeJourney from '../components/rhythmia/LifeJourney';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer' | 'modded';
 
