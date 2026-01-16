@@ -352,7 +352,7 @@ export const Rhythmia: React.FC = () => {
     if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, boardForCollisionCheck)) {
       endGame();
     }
-  }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame, completeBoard]);
+  }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame]);
 
   const move = useCallback((dx: number, dy: number) => {
     if (gameOverRef.current || !pieceRef.current) return;
