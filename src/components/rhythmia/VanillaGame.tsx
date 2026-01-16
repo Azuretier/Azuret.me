@@ -282,13 +282,20 @@ export const Rhythmia: React.FC = () => {
       }
     });
 
+    // Prepare the board state for collision check
+    let boardForCollisionCheck = newBoard;
     if (cleared > 0) {
+      // Complete the remaining board by adding empty rows at the top
+      const completedRemainingBoard = [...remainingBoard];
+      while (completedRemainingBoard.length < H) {
+        completedRemainingBoard.unshift(Array(W).fill(null));
+      }
+      boardForCollisionCheck = completedRemainingBoard;
+
       setClearingRows(rowsToClear);
       setBoard(newBoard);
 
       setTimeout(() => {
-        while (remainingBoard.length < H) remainingBoard.unshift(Array(W).fill(null));
-
         const currentCombo = comboRef.current;
         const currentLevel = levelRef.current;
         const pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
@@ -318,8 +325,8 @@ export const Rhythmia: React.FC = () => {
         setTimeout(() => setBoardShake(false), 200);
 
         setClearingRows([]);
-        setBoard(remainingBoard);
-        boardStateRef.current = remainingBoard;
+        setBoard(completedRemainingBoard);
+        boardStateRef.current = completedRemainingBoard;
       }, 300);
     } else {
       setBoard(newBoard);
@@ -337,7 +344,7 @@ export const Rhythmia: React.FC = () => {
     setPiecePos(newPos);
     piecePosRef.current = newPos;
 
-    if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, cleared > 0 ? boardStateRef.current : newBoard)) {
+    if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, boardForCollisionCheck)) {
       endGame();
     }
   }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame]);
