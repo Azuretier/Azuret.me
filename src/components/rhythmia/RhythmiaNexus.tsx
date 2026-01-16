@@ -184,6 +184,8 @@ export default function RhythmiaNexus() {
       )}
 
       {/* Game Containers */}
+      {/* Note: The iframe content (games) from the original HTML can be added here later */}
+      {/* Original HTML had embedded game HTML via srcdoc attribute */}
       {activeGame === 'vanilla' && (
         <div className={`${styles.gameContainer} ${styles.active}`}>
           <div className={styles.gameHeader}>
