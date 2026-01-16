@@ -1724,7 +1724,16 @@
                     score += pts;
                     lines += cleared;
                     
-                    enemyHP = Math.max(0, enemyHP - cleared * 8 * mult * (tSpinType === 'tspin' ? 1.5 : 1));
+                    let tSpinDamageMult;
+                    if (tSpinType === 'tspin') {
+                        tSpinDamageMult = 1.5;
+                    } else if (tSpinType === 'mini') {
+                        // Mini T-Spins intentionally do not get extra damage (1x)
+                        tSpinDamageMult = 1;
+                    } else {
+                        tSpinDamageMult = 1;
+                    }
+                    enemyHP = Math.max(0, enemyHP - cleared * 8 * mult * tSpinDamageMult);
                     enemyFill.style.width = enemyHP + '%';
                     
                     if (enemyHP <= 0) {
