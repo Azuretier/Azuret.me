@@ -67,8 +67,16 @@ export default function MultiplayerGame() {
         playerIdRef.current = user.uid;
         setIsAuthenticated(true);
       } else {
+        playerIdRef.current = '';
         setIsAuthenticated(false);
       }
+    });
+    
+    // Sign in anonymously after setting up the listener
+    signInAnonymously(auth).catch((error) => {
+      console.error('Authentication error:', error);
+      setConnectionStatus('error');
+      setError('認証に失敗しました。ページを再読み込みしてください。');
     });
     
     return () => unsubscribe();
@@ -83,9 +91,6 @@ export default function MultiplayerGame() {
         return;
       }
       setConnectionStatus('connecting');
-      
-      // Sign in anonymously first
-      await signInAnonymously(auth);
       
       // Test Firebase connection with a simple query
       const testQuery = query(collection(db, 'rhythmia_rooms'));
@@ -124,7 +129,7 @@ export default function MultiplayerGame() {
   const handleNameSubmit = useCallback(() => {
     if (playerName.trim().length < 2) return;
     if (!isAuthenticated) {
-      setError('認証中です。しばらくお待ちください。');
+      setError('認証が完了していません。もう一度お試しください。');
       return;
     }
     // playerIdRef.current is already set by onAuthStateChanged
