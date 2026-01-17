@@ -143,7 +143,7 @@ class GameSessionManager {
   /**
    * Get current tick and recent history for resync
    */
-  getResyncData(): { currentTick: number; tickHistory: typeof this.tickHistory } {
+  getResyncData(): { currentTick: number; tickHistory: Array<{ tick: number; inputs: { [playerId: string]: GameAction[] } }> } {
     return {
       currentTick: this.currentTick,
       tickHistory: [...this.tickHistory],
