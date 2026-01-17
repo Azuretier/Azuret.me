@@ -619,8 +619,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
           }, 150);
           break;
         case 'ArrowDown':
-          move(0, 1);
-          // Start continuous soft drop
+          // Start continuous soft drop without immediate move to prevent instant lock
           softDropInterval.current = window.setInterval(() => move(0, 1), 50);
           break;
         case 'ArrowUp':
