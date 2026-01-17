@@ -109,6 +109,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const pendingGarbageRef = useRef(pendingGarbage);
   const keysPressed = useRef<Set<string>>(new Set());
   const softDropInterval = useRef<number | null>(null);
+  const moveRepeatTimeout = useRef<number | null>(null);
   const moveRepeatInterval = useRef<number | null>(null);
 
   // Keep refs in sync
@@ -606,14 +607,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
         case 'ArrowLeft':
           move(-1, 0);
           // Start repeat interval after 150ms delay
-          moveRepeatInterval.current = window.setTimeout(() => {
+          moveRepeatTimeout.current = window.setTimeout(() => {
             moveRepeatInterval.current = window.setInterval(() => move(-1, 0), 50);
           }, 150);
           break;
         case 'ArrowRight':
           move(1, 0);
           // Start repeat interval after 150ms delay
-          moveRepeatInterval.current = window.setTimeout(() => {
+          moveRepeatTimeout.current = window.setTimeout(() => {
             moveRepeatInterval.current = window.setInterval(() => move(1, 0), 50);
           }, 150);
           break;
@@ -638,9 +639,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
       switch (e.key) {
         case 'ArrowLeft':
         case 'ArrowRight':
+          if (moveRepeatTimeout.current) {
+            clearTimeout(moveRepeatTimeout.current);
+            moveRepeatTimeout.current = null;
+          }
           if (moveRepeatInterval.current) {
             clearInterval(moveRepeatInterval.current);
-            clearTimeout(moveRepeatInterval.current);
             moveRepeatInterval.current = null;
           }
           break;
@@ -660,10 +664,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
       if (softDropInterval.current) clearInterval(softDropInterval.current);
-      if (moveRepeatInterval.current) {
-        clearInterval(moveRepeatInterval.current);
-        clearTimeout(moveRepeatInterval.current);
-      }
+      if (moveRepeatTimeout.current) clearTimeout(moveRepeatTimeout.current);
+      if (moveRepeatInterval.current) clearInterval(moveRepeatInterval.current);
     };
   }, [move, rotatePiece, hardDrop]);
 
