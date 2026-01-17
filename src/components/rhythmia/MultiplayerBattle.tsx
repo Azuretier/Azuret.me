@@ -162,6 +162,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
     freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
   }, [playTone]);
 
+  const showJudgment = useCallback((text: string) => {
+    setJudgmentText(text);
+    setShowJudgmentAnim(false);
+    requestAnimationFrame(() => {
+      setShowJudgmentAnim(true);
+    });
+  }, []);
+
   // ===== WebSocket =====
   const connectWebSocket = useCallback(() => {
     const wsUrl = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
@@ -201,7 +209,13 @@ export const MultiplayerBattle: React.FC<Props> = ({
             setPendingGarbage(prev => prev + (payload.count || 0));
           } else if (payload.type === 'game_over') {
             // Opponent lost - we win!
-            handleGameEnd(playerId);
+            setGameOver(true);
+            setWinner(playerId);
+            if (dropTimerRef.current) clearInterval(dropTimerRef.current);
+            if (beatTimerRef.current) clearInterval(beatTimerRef.current);
+            showJudgment('VICTORY!');
+            playTone(523, 0.3, 'triangle');
+            onGameEnd(playerId);
           }
         } else if (message.type === 'ping') {
           // Respond to ping to keep connection alive
@@ -228,7 +242,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         ws.close();
       }
     };
-  }, [playerId, roomCode, handleGameEnd]);
+  }, [playerId, roomCode, showJudgment, playTone, onGameEnd]);
 
   const sendGameState = useCallback((state: Partial<GameState>) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -289,14 +303,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
       ...p,
       shape: p.shape[0].map((_, i) => p.shape.map(row => row[i]).reverse()),
     };
-  }, []);
-
-  const showJudgment = useCallback((text: string) => {
-    setJudgmentText(text);
-    setShowJudgmentAnim(false);
-    requestAnimationFrame(() => {
-      setShowJudgmentAnim(true);
-    });
   }, []);
 
   const completeBoard = useCallback((partialBoard: (PieceCell | null)[][]) => {
