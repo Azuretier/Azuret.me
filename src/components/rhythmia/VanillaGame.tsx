@@ -123,6 +123,9 @@ export const Rhythmia: React.FC = () => {
   const moveRepeatTimeout = useRef<number | null>(null);
   const moveRepeatInterval = useRef<number | null>(null);
   const lastRotationRef = useRef(lastRotationWasSuccessful);
+  const lockDelayTimer = useRef<number | null>(null);
+  const wasGroundedRef = useRef(false);
+  const lockFnRef = useRef<(() => void) | null>(null);
 
   // Keep refs in sync
   useEffect(() => { pieceRef.current = piece; }, [piece]);
@@ -225,6 +228,32 @@ export const Rhythmia: React.FC = () => {
     );
   }, []);
 
+  const isGrounded = useCallback((p: Piece, x: number, y: number, boardState: (PieceCell | null)[][]): boolean => {
+    return collision(p, x, y + 1, boardState);
+  }, [collision]);
+
+  const startLockDelay = useCallback(() => {
+    // Clear any existing lock delay timer
+    if (lockDelayTimer.current !== null) {
+      clearTimeout(lockDelayTimer.current);
+    }
+    
+    // Start new lock delay timer (250ms)
+    lockDelayTimer.current = window.setTimeout(() => {
+      if (lockFnRef.current) {
+        lockFnRef.current();
+      }
+      lockDelayTimer.current = null;
+    }, 250);
+  }, []);
+
+  const cancelLockDelay = useCallback(() => {
+    if (lockDelayTimer.current !== null) {
+      clearTimeout(lockDelayTimer.current);
+      lockDelayTimer.current = null;
+    }
+  }, []);
+
   const rotate = useCallback((p: Piece): Piece => {
     const newRotation = ((p.rotation + 1) % 4) as 0 | 1 | 2 | 3;
     return {
@@ -276,6 +305,11 @@ export const Rhythmia: React.FC = () => {
     setShowGameOver(true);
     if (dropTimerRef.current) clearInterval(dropTimerRef.current);
     if (beatTimerRef.current) clearInterval(beatTimerRef.current);
+    if (lockDelayTimer.current) {
+      clearTimeout(lockDelayTimer.current);
+      lockDelayTimer.current = null;
+    }
+    wasGroundedRef.current = false;
     playTone(131, 0.5, 'sawtooth');
   }, [playTone]);
 
@@ -355,6 +389,14 @@ export const Rhythmia: React.FC = () => {
   }, []);
 
   const lock = useCallback(() => {
+    // Clear any pending lock delay timer
+    if (lockDelayTimer.current !== null) {
+      clearTimeout(lockDelayTimer.current);
+      lockDelayTimer.current = null;
+    }
+    
+    wasGroundedRef.current = false;
+
     const currentPiece = pieceRef.current;
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
@@ -526,15 +568,45 @@ export const Rhythmia: React.FC = () => {
       lastRotationRef.current = false;
     }
 
+    // Check if currently grounded before the move
+    const wasGrounded = isGrounded(currentPiece, currentPos.x, currentPos.y, currentBoard);
+
     if (!collision(currentPiece, currentPos.x + dx, currentPos.y + dy, currentBoard)) {
+      // Move is successful
       const newPos = { x: currentPos.x + dx, y: currentPos.y + dy };
       setPiecePos(newPos);
       piecePosRef.current = newPos;
       if (dx !== 0) playTone(392, 0.05, 'square');
+
+      // Check if piece is grounded after the move
+      const isNowGrounded = isGrounded(currentPiece, newPos.x, newPos.y, currentBoard);
+      
+      if (isNowGrounded) {
+        // Piece is grounded after move
+        if (wasGrounded && wasGroundedRef.current) {
+          // Was already grounded - this is a successful move while grounded, reset timer
+          startLockDelay();
+        } else {
+          // Just landed - start lock delay
+          wasGroundedRef.current = true;
+          startLockDelay();
+        }
+      } else {
+        // Piece is not grounded - cancel any lock delay
+        wasGroundedRef.current = false;
+        cancelLockDelay();
+      }
     } else if (dy > 0) {
-      lock();
+      // Downward move failed due to collision (piece hit something below)
+      // This means we're trying to move into a blocked space
+      // Start lock delay if not already started
+      if (!wasGroundedRef.current) {
+        wasGroundedRef.current = true;
+        startLockDelay();
+      }
+      // If lock delay is already active, don't restart it (failed moves don't reset)
     }
-  }, [collision, playTone, lock]);
+  }, [collision, playTone, isGrounded, startLockDelay, cancelLockDelay]);
 
   const rotatePiece = useCallback((direction: 1 | -1 = 1) => {
     if (gameOverRef.current || !pieceRef.current) return;
@@ -542,6 +614,9 @@ export const Rhythmia: React.FC = () => {
     const currentPiece = pieceRef.current;
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
+
+    // Check if currently grounded before rotation
+    const wasGrounded = isGrounded(currentPiece, currentPos.x, currentPos.y, currentBoard);
 
     // 1. Get the target shape
     const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
@@ -562,13 +637,34 @@ export const Rhythmia: React.FC = () => {
         
         playTone(direction === 1 ? 523 : 440, 0.08);
         lastRotationRef.current = true; // For T-Spin detection
+        
+        // Check if piece is grounded after rotation
+        const isNowGrounded = isGrounded(rotated, newPos.x, newPos.y, currentBoard);
+        
+        if (isNowGrounded) {
+          // Piece is grounded after rotation
+          if (wasGrounded && wasGroundedRef.current) {
+            // Was already grounded - successful rotation while grounded, reset timer
+            startLockDelay();
+          } else {
+            // Just landed - start lock delay
+            wasGroundedRef.current = true;
+            startLockDelay();
+          }
+        } else {
+          // Piece is not grounded - cancel any lock delay
+          wasGroundedRef.current = false;
+          cancelLockDelay();
+        }
+        
         return; 
       }
     }
     
-    // If we reach here, no kicks worked
+    // If we reach here, no kicks worked - rotation failed
     lastRotationRef.current = false;
-  }, [rotate, rotateCCW, collision, playTone]);
+    // Failed rotation should NOT reset the lock delay timer
+  }, [rotate, rotateCCW, collision, playTone, isGrounded, startLockDelay, cancelLockDelay]);
 
   const hardDrop = useCallback(() => {
     if (gameOverRef.current || !pieceRef.current) return;
@@ -584,12 +680,24 @@ export const Rhythmia: React.FC = () => {
     setPiecePos(currentPos);
     piecePosRef.current = currentPos;
     playTone(196, 0.1, 'sawtooth');
+    
+    // Hard drop bypasses lock delay - immediate lock
+    // Cancel any pending lock delay and lock immediately
+    cancelLockDelay();
+    wasGroundedRef.current = false;
     lock();
-  }, [collision, playTone, lock]);
+  }, [collision, playTone, cancelLockDelay, lock]);
 
   // ===== Start Game =====
   const startGame = useCallback(() => {
     initAudio();
+
+    // Clear any pending lock delay timer
+    if (lockDelayTimer.current !== null) {
+      clearTimeout(lockDelayTimer.current);
+      lockDelayTimer.current = null;
+    }
+    wasGroundedRef.current = false;
 
     const initialBoard = Array(H).fill(null).map(() => Array(W).fill(null));
     const initialPiece = randomPiece(0);
@@ -623,6 +731,11 @@ export const Rhythmia: React.FC = () => {
   }, [initAudio, randomPiece]);
 
   // ===== Effects =====
+
+  // Keep lock function ref up to date
+  useEffect(() => {
+    lockFnRef.current = lock;
+  }, [lock]);
 
   // Drop timer
   useEffect(() => {
@@ -755,6 +868,10 @@ export const Rhythmia: React.FC = () => {
       if (softDropInterval.current) clearInterval(softDropInterval.current);
       if (moveRepeatTimeout.current) clearTimeout(moveRepeatTimeout.current);
       if (moveRepeatInterval.current) clearInterval(moveRepeatInterval.current);
+      if (lockDelayTimer.current) {
+        clearTimeout(lockDelayTimer.current);
+        lockDelayTimer.current = null;
+      }
     };
   }, [move, rotatePiece, hardDrop]);
 
