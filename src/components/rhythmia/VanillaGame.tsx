@@ -339,7 +339,7 @@ export const Rhythmia: React.FC = () => {
 
         playLineClear(cleared);
         setBoardShake(true);
-        setTimeout(() => setBoardShake(false));
+        setTimeout(() => setBoardShake(false), 200);
 
         setClearingRows([]);
         setBoard(remainingBoard);
