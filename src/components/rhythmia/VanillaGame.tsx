@@ -87,6 +87,7 @@ export const Rhythmia: React.FC = () => {
   const softDropInterval = useRef<number | null>(null);
   const moveRepeatTimeout = useRef<number | null>(null);
   const moveRepeatInterval = useRef<number | null>(null);
+  const lastRotationRef = useRef(lastRotationWasSuccessful);
 
   // Keep refs in sync
   useEffect(() => { pieceRef.current = piece; }, [piece]);
