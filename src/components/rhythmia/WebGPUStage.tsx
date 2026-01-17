@@ -12,12 +12,14 @@ export default function WebGPUStage() {
   const uniformBufferRef = useRef<GPUBuffer | null>(null);
   const bindGroupRef = useRef<GPUBindGroup | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const resolutionRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     let mounted = true;
+    let cleanupResize: (() => void) | null = null;
 
     const init = async () => {
       // Check for WebGPU support
@@ -116,6 +118,7 @@ export default function WebGPUStage() {
             // Aspect ratio correction
             var coord = uv;
             coord.x *= resolution.x / resolution.y;
+            let aspectRatio = resolution.x / resolution.y;
             
             // Heartbeat/rhythm pulse (60-120 BPM range)
             let bpm = 90.0;
@@ -133,7 +136,8 @@ export default function WebGPUStage() {
                            smoothstep(0.02, 0.0, min(1.0 - grid.x, 1.0 - grid.y));
             
             // Fade grid with distance (perspective effect)
-            let centerDist = length(coord - vec2<f32>(0.5 * resolution.x / resolution.y, 0.5));
+            let centerCoord = vec2<f32>(0.5 * aspectRatio, 0.5);
+            let centerDist = length(coord - centerCoord);
             let gridFade = smoothstep(1.5, 0.3, centerDist);
             gridLines *= gridFade;
             
@@ -248,10 +252,16 @@ export default function WebGPUStage() {
           const dpr = window.devicePixelRatio || 1;
           canvas.width = canvas.clientWidth * dpr;
           canvas.height = canvas.clientHeight * dpr;
+          resolutionRef.current = { width: canvas.width, height: canvas.height };
         };
 
         handleResize();
         window.addEventListener('resize', handleResize);
+        
+        // Store cleanup function
+        cleanupResize = () => {
+          window.removeEventListener('resize', handleResize);
+        };
 
         // Animation loop
         const render = () => {
@@ -261,12 +271,12 @@ export default function WebGPUStage() {
 
           const elapsed = (Date.now() - startTimeRef.current) / 1000;
           
-          // Update uniforms
+          // Update uniforms (only time changes per frame, resolution cached)
           const uniformData = new Float32Array([
             elapsed,
             0, // padding
-            canvas.width,
-            canvas.height,
+            resolutionRef.current.width,
+            resolutionRef.current.height,
           ]);
           device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
@@ -297,11 +307,6 @@ export default function WebGPUStage() {
 
         // Start rendering
         render();
-
-        // Cleanup function
-        return () => {
-          window.removeEventListener('resize', handleResize);
-        };
       } catch (error) {
         console.error('WebGPU initialization failed:', error);
       }
@@ -314,8 +319,11 @@ export default function WebGPUStage() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      // Note: WebGPU resources will be cleaned up by garbage collection
-      // The TypeScript definitions don't include destroy methods
+      if (cleanupResize) {
+        cleanupResize();
+      }
+      // WebGPU resources cleanup: buffers and contexts are released when no longer referenced
+      // Device loses itself automatically on page unload
     };
   }, []);
 
