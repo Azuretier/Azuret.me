@@ -510,7 +510,7 @@ export const Rhythmia: React.FC = () => {
     const currentBoard = boardStateRef.current;
 
     // Movement resets the rotation flag
-    if (dx !== 0) {
+    if (dx !== 0 || dy > 0) {
       setLastRotationWasSuccessful(false);
       lastRotationRef.current = false;
     }
