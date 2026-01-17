@@ -315,12 +315,12 @@ export const Rhythmia: React.FC = () => {
 
         playLineClear(cleared);
         setBoardShake(true);
-        setTimeout(() => setBoardShake(false), 200);
+        setTimeout(() => setBoardShake(false));
 
         setClearingRows([]);
         setBoard(remainingBoard);
         boardStateRef.current = remainingBoard;
-      }, 300);
+      });
     } else {
       setBoard(newBoard);
       boardStateRef.current = newBoard;
