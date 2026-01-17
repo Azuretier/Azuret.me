@@ -336,6 +336,7 @@ export const Rhythmia: React.FC = () => {
         setClearingRows([]);
         const completedBoard = completeBoard(remainingBoard);
         setBoard(completedBoard);
+        boardStateRef.current = completedBoard;
       }, 300);
     } else {
       setBoard(newBoard);
