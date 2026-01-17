@@ -132,8 +132,6 @@ export const Rhythmia: React.FC = () => {
   useEffect(() => { worldIdxRef.current = worldIdx; }, [worldIdx]);
   useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
   useEffect(() => { lastRotationRef.current = lastRotationWasSuccessful; }, [lastRotationWasSuccessful]);
-  useEffect(() => { worldIdxRef.current = worldIdx; }, [worldIdx]);
-  useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
 
   // ===== Audio =====
   const initAudio = useCallback(() => {
@@ -516,7 +514,7 @@ export const Rhythmia: React.FC = () => {
       lastRotationRef.current = false;
     }
 
-    if (! collision(currentPiece, currentPos.x + dx, currentPos. y + dy, currentBoard)) {
+    if (!collision(currentPiece, currentPos.x + dx, currentPos.y + dy, currentBoard)) {
       const newPos = { x: currentPos.x + dx, y: currentPos.y + dy };
       setPiecePos(newPos);
       piecePosRef.current = newPos;
@@ -578,13 +576,13 @@ export const Rhythmia: React.FC = () => {
   }, [rotate, collision, playTone]);
 
   const hardDrop = useCallback(() => {
-    if (gameOverRef. current || !pieceRef.current) return;
+    if (gameOverRef.current || !pieceRef.current) return;
 
     const currentPiece = pieceRef.current;
-    let currentPos = { ... piecePosRef.current };
+    let currentPos = {...piecePosRef.current};
     const currentBoard = boardStateRef.current;
 
-    while (! collision(currentPiece, currentPos.x, currentPos.y + 1, currentBoard)) {
+    while (!collision(currentPiece, currentPos.x, currentPos.y + 1, currentBoard)) {
       currentPos.y++;
     }
 
