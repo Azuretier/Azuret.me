@@ -118,6 +118,10 @@ export const Rhythmia: React.FC = () => {
   const enemyHPRef = useRef(enemyHP);
   const worldIdxRef = useRef(worldIdx);
   const beatPhaseRef = useRef(beatPhase);
+  const keysPressed = useRef<Set<string>>(new Set());
+  const softDropInterval = useRef<number | null>(null);
+  const moveRepeatTimeout = useRef<number | null>(null);
+  const moveRepeatInterval = useRef<number | null>(null);
   const lastRotationRef = useRef(lastRotationWasSuccessful);
 
   // Keep refs in sync
@@ -681,19 +685,77 @@ export const Rhythmia: React.FC = () => {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent key repeat events
+      if (keysPressed.current.has(e.key)) return;
+      keysPressed.current.add(e.key);
+
       switch (e.key) {
-        case 'ArrowLeft': move(-1, 0); break;
-        case 'ArrowRight': move(1, 0); break;
-        case 'ArrowDown': move(0, 1); break;
-        case 'ArrowUp': rotatePiece(1); break;
+        case 'ArrowLeft':
+          move(-1, 0);
+          // Start repeat interval after 150ms delay
+          moveRepeatTimeout.current = window.setTimeout(() => {
+            moveRepeatInterval.current = window.setInterval(() => move(-1, 0), 50);
+          }, 150);
+          break;
+        case 'ArrowRight':
+          move(1, 0);
+          // Start repeat interval after 150ms delay
+          moveRepeatTimeout.current = window.setTimeout(() => {
+            moveRepeatInterval.current = window.setInterval(() => move(1, 0), 50);
+          }, 150);
+          break;
+        case 'ArrowDown':
+          // Start continuous soft drop without immediate move to prevent instant lock
+          softDropInterval.current = window.setInterval(() => move(0, 1), 50);
+          break;
+        case 'ArrowUp':
+          rotatePiece(1);
+          break;
         case 'z':
-        case 'Z': rotatePiece(-1); break;
-        case ' ': e.preventDefault(); hardDrop(); break;
+        case 'Z':
+          rotatePiece(-1);
+          break;
+        case ' ':
+          e.preventDefault();
+          hardDrop();
+          break;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.key);
+
+      switch (e.key) {
+        case 'ArrowLeft':
+        case 'ArrowRight':
+          if (moveRepeatTimeout.current) {
+            clearTimeout(moveRepeatTimeout.current);
+            moveRepeatTimeout.current = null;
+          }
+          if (moveRepeatInterval.current) {
+            clearInterval(moveRepeatInterval.current);
+            moveRepeatInterval.current = null;
+          }
+          break;
+        case 'ArrowDown':
+          if (softDropInterval.current) {
+            clearInterval(softDropInterval.current);
+            softDropInterval.current = null;
+          }
+          break;
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      if (softDropInterval.current) clearInterval(softDropInterval.current);
+      if (moveRepeatTimeout.current) clearTimeout(moveRepeatTimeout.current);
+      if (moveRepeatInterval.current) clearInterval(moveRepeatInterval.current);
+    };
   }, [move, rotatePiece, hardDrop]);
 
   // Update cell size on resize
