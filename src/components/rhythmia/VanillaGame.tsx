@@ -230,6 +230,13 @@ export const Rhythmia: React.FC = () => {
     };
   }, []);
 
+  const rotateCCW = useCallback((p: Piece): Piece => {
+    return {
+      ...p,
+      shape: p.shape[0].map((_, i) => p.shape.map(row => row[row.length - 1 - i])),
+    };
+  }, []);
+
   const showJudgment = useCallback((text: string, color: string) => {
     setJudgmentText(text);
     setJudgmentColor(color);
@@ -525,56 +532,20 @@ export const Rhythmia: React.FC = () => {
     }
   }, [collision, playTone, lock]);
 
-  const rotatePiece = useCallback(() => {
+  const rotatePiece = useCallback((direction: 1 | -1 = 1) => {
     if (gameOverRef.current || !pieceRef.current) return;
 
     const currentPiece = pieceRef.current;
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
 
-    const rotated = rotate(currentPiece);
-    
-    // O piece doesn't need wall kicks (it's symmetrical)
-    if (currentPiece.type === 'O') {
-      // O piece rotation is identity, but we still update rotation state
+    const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
+    if (!collision(rotated, currentPos.x, currentPos.y, currentBoard)) {
       setPiece(rotated);
       pieceRef.current = rotated;
-      playTone(523, 0.08);
-      setLastRotationWasSuccessful(true);
-      lastRotationRef.current = true;
-      return;
+      playTone(direction === 1 ? 523 : 440, 0.08);
     }
-    
-    // Get the appropriate wall kick table
-    const kickTable = currentPiece.type === 'I' ? WALL_KICK_I : WALL_KICK_JLSTZ;
-    const kickKey = `${currentPiece.rotation}->${rotated.rotation}`;
-    const kickTests = kickTable[kickKey] || [[0, 0]];
-    
-    // Try each kick offset
-    for (const [offsetX, offsetY] of kickTests) {
-      const testX = currentPos.x + offsetX;
-      const testY = currentPos.y + offsetY;
-      
-      if (!collision(rotated, testX, testY, currentBoard)) {
-        // Rotation successful with this offset
-        const newPos = { x: testX, y: testY };
-        setPiece(rotated);
-        pieceRef.current = rotated;
-        setPiecePos(newPos);
-        piecePosRef.current = newPos;
-        playTone(523, 0.08);
-        
-        // Mark that a rotation was successful (for T-Spin detection)
-        setLastRotationWasSuccessful(true);
-        lastRotationRef.current = true;
-        return;
-      }
-    }
-    
-    // All kick tests failed, rotation is not possible
-    setLastRotationWasSuccessful(false);
-    lastRotationRef.current = false;
-  }, [rotate, collision, playTone]);
+  }, [rotate, rotateCCW, collision, playTone]);
 
   const hardDrop = useCallback(() => {
     if (gameOverRef.current || !pieceRef.current) return;
@@ -692,10 +663,12 @@ export const Rhythmia: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'ArrowLeft':  move(-1, 0); break;
+        case 'ArrowLeft': move(-1, 0); break;
         case 'ArrowRight': move(1, 0); break;
         case 'ArrowDown': move(0, 1); break;
-        case 'ArrowUp': rotatePiece(); break;
+        case 'ArrowUp': rotatePiece(1); break;
+        case 'z':
+        case 'Z': rotatePiece(-1); break;
         case ' ': e.preventDefault(); hardDrop(); break;
       }
     };
@@ -749,7 +722,8 @@ export const Rhythmia: React.FC = () => {
       case 'left': move(-1, 0); break;
       case 'right': move(1, 0); break;
       case 'down': move(0, 1); break;
-      case 'rotate': rotatePiece(); break;
+      case 'rotate': rotatePiece(1); break;
+      case 'rotateLeft': rotatePiece(-1); break;
       case 'drop': hardDrop(); break;
     }
   }, [move, rotatePiece, hardDrop]);
@@ -858,15 +832,19 @@ export const Rhythmia: React.FC = () => {
             <div className={styles. beatFill} style={{ width: `${beatPhase * 100}%` }} />
           </div>
 
-          <div className={styles. controls}>
-            {['rotate', 'left', 'down', 'right', 'drop'].map((action) => (
+          <div className={styles.controls}>
+            {['rotateLeft', 'left', 'down', 'right', 'rotate', 'drop'].map((action) => (
               <button
                 key={action}
                 className={styles.ctrlBtn}
                 onTouchEnd={(e) => { e.preventDefault(); handleControlClick(action); }}
                 onClick={() => handleControlClick(action)}
               >
-                {action === 'rotate' ?  '↻' : action === 'left' ? '←' : action === 'down' ?  '↓' : action === 'right' ? '→' :  '⬇'}
+                {action === 'rotate' ? '↻' : 
+                 action === 'rotateLeft' ? '↺' : 
+                 action === 'left' ? '←' : 
+                 action === 'down' ? '↓' : 
+                 action === 'right' ? '→' : '⬇'}
               </button>
             ))}
           </div>
