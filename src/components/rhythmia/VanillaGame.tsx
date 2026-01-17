@@ -227,14 +227,6 @@ export const Rhythmia: React.FC = () => {
     playTone(131, 0.5, 'sawtooth');
   }, [playTone]);
 
-  const completeBoard = useCallback((partialBoard: (PieceCell | null)[][]) => {
-    const completed = [...partialBoard];
-    while (completed.length < H) {
-      completed.unshift(Array(W).fill(null));
-    }
-    return completed;
-  }, []);
-
   const lock = useCallback(() => {
     const currentPiece = pieceRef.current;
     const currentPos = piecePosRef.current;
