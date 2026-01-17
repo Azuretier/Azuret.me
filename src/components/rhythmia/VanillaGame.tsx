@@ -354,7 +354,7 @@ export const Rhythmia: React.FC = () => {
     const currentPiece = pieceRef.current;
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
-    const currentBeatPhase = beatPhaseRef. current;
+    const currentBeatPhase = beatPhaseRef.current;
 
     if (! currentPiece) return;
 
