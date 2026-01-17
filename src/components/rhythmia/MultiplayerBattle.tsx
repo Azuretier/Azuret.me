@@ -107,6 +107,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const linesRef = useRef(lines);
   const beatPhaseRef = useRef(beatPhase);
   const pendingGarbageRef = useRef(pendingGarbage);
+  const keysPressed = useRef<Set<string>>(new Set());
+  const softDropInterval = useRef<number | null>(null);
+  const moveRepeatInterval = useRef<number | null>(null);
 
   // Keep refs in sync
   useEffect(() => { pieceRef.current = piece; }, [piece]);
@@ -595,17 +598,73 @@ export const MultiplayerBattle: React.FC<Props> = ({
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent key repeat events
+      if (keysPressed.current.has(e.key)) return;
+      keysPressed.current.add(e.key);
+
       switch (e.key) {
-        case 'ArrowLeft': move(-1, 0); break;
-        case 'ArrowRight': move(1, 0); break;
-        case 'ArrowDown': move(0, 1); break;
-        case 'ArrowUp': rotatePiece(); break;
-        case ' ': e.preventDefault(); hardDrop(); break;
+        case 'ArrowLeft':
+          move(-1, 0);
+          // Start repeat interval after 150ms delay
+          moveRepeatInterval.current = window.setTimeout(() => {
+            moveRepeatInterval.current = window.setInterval(() => move(-1, 0), 50);
+          }, 150);
+          break;
+        case 'ArrowRight':
+          move(1, 0);
+          // Start repeat interval after 150ms delay
+          moveRepeatInterval.current = window.setTimeout(() => {
+            moveRepeatInterval.current = window.setInterval(() => move(1, 0), 50);
+          }, 150);
+          break;
+        case 'ArrowDown':
+          move(0, 1);
+          // Start continuous soft drop
+          softDropInterval.current = window.setInterval(() => move(0, 1), 50);
+          break;
+        case 'ArrowUp':
+          rotatePiece();
+          break;
+        case ' ':
+          e.preventDefault();
+          hardDrop();
+          break;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.key);
+
+      switch (e.key) {
+        case 'ArrowLeft':
+        case 'ArrowRight':
+          if (moveRepeatInterval.current) {
+            clearInterval(moveRepeatInterval.current);
+            clearTimeout(moveRepeatInterval.current);
+            moveRepeatInterval.current = null;
+          }
+          break;
+        case 'ArrowDown':
+          if (softDropInterval.current) {
+            clearInterval(softDropInterval.current);
+            softDropInterval.current = null;
+          }
+          break;
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      if (softDropInterval.current) clearInterval(softDropInterval.current);
+      if (moveRepeatInterval.current) {
+        clearInterval(moveRepeatInterval.current);
+        clearTimeout(moveRepeatInterval.current);
+      }
+    };
   }, [move, rotatePiece, hardDrop]);
 
   // Update cell size on resize
