@@ -86,6 +86,8 @@ export class VoxelEngine {
     private onGround = false;
     private prevTime = performance.now();
     private frameCount = 0;
+    private lastBlockPlacementTime = 0;
+    private blockPlacementCooldown = 250; // milliseconds
     
     public isRunning = false;
     public isPaused = false;
@@ -537,6 +539,12 @@ export class VoxelEngine {
             const selectedBlock = (window as any).__SELECTED_BLOCK__;
             if (!selectedBlock) return; 
 
+            // Check cooldown to prevent blocks from placing too quickly
+            const currentTime = performance.now();
+            if (currentTime - this.lastBlockPlacementTime < this.blockPlacementCooldown) {
+                return; // Still in cooldown period
+            }
+
             const placeX = Math.floor((p.x + n.x * 0.1) / BLOCK_SIZE);
             const placeY = Math.floor((p.y + n.y * 0.1) / BLOCK_SIZE);
             const placeZ = Math.floor((p.z + n.z * 0.1) / BLOCK_SIZE);
@@ -558,6 +566,7 @@ export class VoxelEngine {
             }
 
             this.modifyBlock(placeX, placeY, placeZ, selectedBlock);
+            this.lastBlockPlacementTime = currentTime; // Update last placement time
         }
     }
     
