@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MultiplayerBattle.module.css';
+import { tryRotate, type PieceType, type Rotation } from '@/lib/rotationSystem';
 
 // ===== Types =====
 interface PieceCell {
@@ -12,6 +13,8 @@ interface PieceCell {
 interface Piece {
   shape: number[][];
   color: string;
+  type: PieceType;
+  rotation: Rotation;
 }
 
 interface GameState {
@@ -43,14 +46,16 @@ const COLORS = ['#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A29BFE', '#FF8FAB'
 const GARBAGE_COLOR = '#666666';
 
 const SHAPES = [
-  [[1, 1, 1, 1]],
-  [[1, 1], [1, 1]],
-  [[0, 1, 0], [1, 1, 1]],
-  [[0, 1, 1], [1, 1, 0]],
-  [[1, 1, 0], [0, 1, 1]],
-  [[1, 0, 0], [1, 1, 1]],
-  [[0, 0, 1], [1, 1, 1]],
+  [[1, 1, 1, 1]],        // I
+  [[1, 1], [1, 1]],      // O
+  [[0, 1, 0], [1, 1, 1]], // T
+  [[0, 1, 1], [1, 1, 0]], // S
+  [[1, 1, 0], [0, 1, 1]], // Z
+  [[1, 0, 0], [1, 1, 1]], // L
+  [[0, 0, 1], [1, 1, 1]], // J
 ];
+
+const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
 // ===== Component =====
 export const MultiplayerBattle: React.FC<Props> = ({
@@ -256,9 +261,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
   // ===== Game Logic =====
   const randomPiece = useCallback((): Piece => {
-    const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    const idx = Math.floor(Math.random() * SHAPES.length);
+    const shape = SHAPES[idx];
     const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    return { shape, color };
+    const type = PIECE_TYPES[idx];
+    return { shape, color, type, rotation: 0 };
   }, []);
 
   const collision = useCallback((p: Piece, x: number, y: number, boardState: (PieceCell | null)[][]): boolean => {
@@ -269,13 +276,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
         return nx < 0 || nx >= W || ny >= H || (ny >= 0 && boardState[ny] && boardState[ny][nx]);
       })
     );
-  }, []);
-
-  const rotate = useCallback((p: Piece): Piece => {
-    return {
-      ...p,
-      shape: p.shape[0].map((_, i) => p.shape.map(row => row[i]).reverse()),
-    };
   }, []);
 
   const showJudgment = useCallback((text: string) => {
@@ -466,13 +466,22 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
 
-    const rotated = rotate(currentPiece);
-    if (!collision(rotated, currentPos.x, currentPos.y, currentBoard)) {
-      setPiece(rotated);
-      pieceRef.current = rotated;
+    // Use the new rotation system with proper SRS wall kicks
+    const result = tryRotate(
+      currentPiece,
+      currentPos,
+      1, // Always clockwise for multiplayer simplicity
+      (piece, x, y) => collision(piece, x, y, currentBoard)
+    );
+
+    if (result.success) {
+      setPiece(result.piece);
+      pieceRef.current = result.piece;
+      setPiecePos(result.position);
+      piecePosRef.current = result.position;
       playTone(523, 0.08);
     }
-  }, [rotate, collision, playTone]);
+  }, [collision, playTone]);
 
   const hardDrop = useCallback(() => {
     if (gameOverRef.current || !pieceRef.current) return;
