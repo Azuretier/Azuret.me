@@ -102,11 +102,25 @@ const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
 const CELL_SIZE = 28;
 
+// DAS/ARR Settings (in milliseconds)
+// These are configurable - typical competitive values shown
+const DEFAULT_DAS = 167;  // Delayed Auto Shift - initial delay before auto-repeat (~10 frames at 60fps)
+const DEFAULT_ARR = 33;   // Auto Repeat Rate - delay between each auto-repeat move (~2 frames at 60fps)
+                          // Set to 0 for instant movement (common in competitive play)
+const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
+
 type Piece = {
   type: string;
   rotation: number;
   x: number;
   y: number;
+};
+
+type KeyState = {
+  pressed: boolean;
+  dasCharged: boolean;
+  lastMoveTime: number;
+  pressTime: number;
 };
 
 const rotationNames = ['0', 'R', '2', 'L'];
@@ -144,16 +158,35 @@ export default function Rhythmia() {
   const [lastRotationWasSuccessful, setLastRotationWasSuccessful] = useState(false);
   
   // Refs for accessing current values in callbacks (avoids stale closures)
-  const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
+  const gameLoopRef = useRef<number | null>(null);
   const beatTimerRef = useRef<number | null>(null);
   const lastBeatRef = useRef(Date.now());
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const boardRef = useRef(board);
-  const currentPieceRef = useRef(currentPiece);
   const nextPieceRef = useRef(nextPiece);
-  const scoreRef = useRef(score);
   const comboRef = useRef(combo);
   const linesRef = useRef(lines);
+  
+  // DAS/ARR/SDF settings (adjustable)
+  const [das, setDas] = useState(DEFAULT_DAS);
+  const [arr, setArr] = useState(DEFAULT_ARR);
+  const [sdf, setSdf] = useState(DEFAULT_SDF);
+  
+  const lastGravityRef = useRef<number>(0);
+  const currentPieceRef = useRef<Piece | null>(null);
+  const boardRef = useRef<(string | null)[][]>(createEmptyBoard());
+  const scoreRef = useRef(0);
+  
+  // Key states for DAS/ARR
+  const keyStatesRef = useRef<Record<string, KeyState>>({
+    left: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+    right: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+    down: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+  });
+  
+  // Settings refs for use in game loop
+  const dasRef = useRef(das);
+  const arrRef = useRef(arr);
+  const sdfRef = useRef(sdf);
   const levelRef = useRef(level);
   const gameOverRef = useRef(gameOver);
   const isPausedRef = useRef(isPaused);
@@ -165,10 +198,14 @@ export default function Rhythmia() {
   // Keep refs in sync with state
   useEffect(() => { boardRef.current = board; }, [board]);
   useEffect(() => { currentPieceRef.current = currentPiece; }, [currentPiece]);
+  useEffect(() => { boardRef.current = board; }, [board]);
   useEffect(() => { nextPieceRef.current = nextPiece; }, [nextPiece]);
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { comboRef.current = combo; }, [combo]);
   useEffect(() => { linesRef.current = lines; }, [lines]);
+  useEffect(() => { dasRef.current = das; }, [das]);
+  useEffect(() => { arrRef.current = arr; }, [arr]);
+  useEffect(() => { sdfRef.current = sdf; }, [sdf]);
   useEffect(() => { levelRef.current = level; }, [level]);
   useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
@@ -282,7 +319,7 @@ export default function Rhythmia() {
     if (type === 'I') {
       return WALL_KICKS_I[key] || [[0, 0]];
     } else if (type === 'O') {
-      return [[0, 0]]; // O piece doesn't need wall kicks
+      return [[0, 0]];
     } else {
       return WALL_KICKS_JLSTZ[key] || [[0, 0]];
     }
@@ -298,13 +335,13 @@ export default function Rhythmia() {
         ...piece,
         rotation: toRotation,
         x: piece.x + dx,
-        y: piece.y - dy, // SRS uses inverted Y for kicks
+        y: piece.y - dy,
       };
       if (isValidPosition(testPiece, boardState)) {
         return testPiece;
       }
     }
-    return null; // Rotation failed
+    return null;
   }, [getWallKicks, isValidPosition]);
 
   const spawnPiece = useCallback(() => {
@@ -359,40 +396,111 @@ export default function Rhythmia() {
 
   const movePiece = useCallback((dx: number, dy: number) => {
     if (!currentPiece || gameOver || isPaused) return false;
+    const piece = currentPieceRef.current;
+    const boardState = boardRef.current;
+    
+    if (!piece) return false;
     
     const newPiece: Piece = {
-      ...currentPiece,
-      x: currentPiece.x + dx,
-      y: currentPiece.y + dy,
+      ...piece,
+      x: piece.x + dx,
+      y: piece.y + dy,
     };
     
-    if (isValidPosition(newPiece, board)) {
+    if (isValidPosition(newPiece, boardState)) {
       setCurrentPiece(newPiece);
+      currentPieceRef.current = newPiece;
       return true;
     }
     return false;
   }, [currentPiece, board, isValidPosition, gameOver, isPaused]);
 
+  // Process DAS/ARR for horizontal movement
+  const processHorizontalDasArr = useCallback((direction: 'left' | 'right', currentTime: number) => {
+    const state = keyStatesRef.current[direction];
+    if (!state.pressed || isPausedRef.current || gameOverRef.current) return;
+
+    const dx = direction === 'left' ? -1 : 1;
+    const timeSincePress = currentTime - state.pressTime;
+    const currentDas = dasRef.current;
+    const currentArr = arrRef.current;
+
+    if (!state.dasCharged) {
+      // DAS phase - waiting for initial delay to charge
+      if (timeSincePress >= currentDas) {
+        state.dasCharged = true;
+        state.lastMoveTime = currentTime;
+        
+        // First move after DAS charges
+        if (currentArr === 0) {
+          // Instant ARR - move all the way instantly
+          while (movePiece(dx, 0)) {}
+        } else {
+          movePiece(dx, 0);
+        }
+      }
+    } else {
+      // ARR phase - auto-repeat is active
+      if (currentArr === 0) {
+        // Instant ARR - move to edge every frame
+        while (movePiece(dx, 0)) {}
+      } else {
+        // Normal ARR with delay between moves
+        const timeSinceLastMove = currentTime - state.lastMoveTime;
+        if (timeSinceLastMove >= currentArr) {
+          movePiece(dx, 0);
+          state.lastMoveTime = currentTime;
+        }
+      }
+    }
+  }, [movePiece]);
+
+  // Process soft drop (SDF)
+  const processSoftDrop = useCallback((currentTime: number) => {
+    const state = keyStatesRef.current.down;
+    if (!state.pressed || isPausedRef.current || gameOverRef.current) return;
+
+    const currentSdf = sdfRef.current;
+    const timeSinceLastMove = currentTime - state.lastMoveTime;
+
+    if (currentSdf === 0) {
+      // Instant soft drop (sonic drop without locking)
+      while (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
+    } else if (timeSinceLastMove >= currentSdf) {
+      if (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
+      state.lastMoveTime = currentTime;
+    }
+  }, [movePiece]);
+
   const rotatePiece = useCallback((direction: 1 | -1) => {
     if (!currentPiece || gameOver || isPaused) return;
+    const piece = currentPieceRef.current;
+    if (!piece || gameOverRef.current || isPausedRef.current) return;
     
-    const rotatedPiece = tryRotation(currentPiece, direction, board);
+    const rotatedPiece = tryRotation(piece, direction, boardRef.current);
     if (rotatedPiece) {
       setCurrentPiece(rotatedPiece);
+      currentPieceRef.current = rotatedPiece;
     }
   }, [currentPiece, board, tryRotation, gameOver, isPaused]);
 
   const hardDrop = useCallback(() => {
     if (!currentPiece || gameOver || isPaused) return;
+    const piece = currentPieceRef.current;
+    if (!piece || gameOverRef.current || isPausedRef.current) return;
     
-    let newPiece = { ...currentPiece };
+    let newPiece = { ...piece };
     let dropDistance = 0;
     
-    while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, board)) {
+    while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, boardRef.current)) {
       newPiece.y++;
       dropDistance++;
     }
-    
+
     // Beat judgment
     const currentBeatPhase = beatPhaseRef.current;
     const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
@@ -408,11 +516,12 @@ export default function Rhythmia() {
       setCombo(0);
     }
     
-    const newBoard = lockPiece(newPiece, board);
+    const newBoard = lockPiece(newPiece, boardRef.current);
+    
     const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
     
     setBoard(clearedBoard);
-    
+
     // Calculate score with rhythm multiplier
     const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * (level);
     const finalScore = baseScore * mult * Math.max(1, comboRef.current);
@@ -433,6 +542,8 @@ export default function Rhythmia() {
       setTimeout(() => setBoardShake(false), 200);
     }
     
+    boardRef.current = clearedBoard;
+    setScore(prev => prev + dropDistance * 2 + clearedLines * 100 * levelRef.current);
     setLines(prev => {
       const newLines = prev + clearedLines;
       setLevel(Math.floor(newLines / 10) + 1);
@@ -442,19 +553,22 @@ export default function Rhythmia() {
     playTone(196, 0.1, 'sawtooth');
     const spawned = spawnPiece();
     setCurrentPiece(spawned);
-    setLastRotationWasSuccessful(false);
-  }, [currentPiece, board, isValidPosition, lockPiece, clearLines, spawnPiece, level, gameOver, isPaused, showJudgment, playTone, playLineClear, updateScore, nextWorld]);
+    currentPieceRef.current = spawned;
+  }, [isValidPosition, lockPiece, clearLines, spawnPiece]);
 
   const tick = useCallback(() => {
     if (!currentPiece || gameOver || isPaused) return;
+    const piece = currentPieceRef.current;
+    if (!piece || gameOverRef.current || isPausedRef.current) return;
     
     const newPiece: Piece = {
-      ...currentPiece,
-      y: currentPiece.y + 1,
+      ...piece,
+      y: piece.y + 1,
     };
     
-    if (isValidPosition(newPiece, board)) {
+    if (isValidPosition(newPiece, boardRef.current)) {
       setCurrentPiece(newPiece);
+      currentPieceRef.current = newPiece;
     } else {
       // Beat judgment on lock
       const currentBeatPhase = beatPhaseRef.current;
@@ -470,35 +584,14 @@ export default function Rhythmia() {
       } else {
         setCombo(0);
       }
-      
       // Lock the piece
-      const newBoard = lockPiece(currentPiece, board);
+      const newBoard = lockPiece(piece, boardRef.current);
+      
       const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
       
       setBoard(clearedBoard);
-      
-      // Calculate score with rhythm multiplier
-      const baseScore = [0, 100, 300, 500, 800][clearedLines] * (level);
-      const finalScore = baseScore * mult * Math.max(1, comboRef.current);
-      if (finalScore > 0) {
-        updateScore(scoreRef.current + finalScore);
-      }
-      
-      // Enemy damage
-      if (clearedLines > 0) {
-        const damage = clearedLines * 8 * mult;
-        const newEnemyHP = Math.max(0, enemyHPRef.current - damage);
-        setEnemyHP(newEnemyHP);
-        
-        if (newEnemyHP <= 0) {
-          nextWorld();
-        }
-        
-        playLineClear(clearedLines);
-        setBoardShake(true);
-        setTimeout(() => setBoardShake(false), 200);
-      }
-      
+      boardRef.current = clearedBoard;
+      setScore(prev => prev + clearedLines * 100 * levelRef.current);
       setLines(prev => {
         const newLines = prev + clearedLines;
         setLevel(Math.floor(newLines / 10) + 1);
@@ -507,9 +600,9 @@ export default function Rhythmia() {
       
       const spawned = spawnPiece();
       setCurrentPiece(spawned);
-      setLastRotationWasSuccessful(false);
+      currentPieceRef.current = spawned;
     }
-  }, [currentPiece, board, isValidPosition, lockPiece, clearLines, spawnPiece, level, gameOver, isPaused, showJudgment, playTone, playLineClear, updateScore, nextWorld]);
+  }, [isValidPosition, lockPiece, clearLines, spawnPiece]);
 
   const startGame = useCallback(() => {
     initAudio();
@@ -524,26 +617,38 @@ export default function Rhythmia() {
     setGameOver(false);
     setIsPaused(false);
     setIsPlaying(true);
-    setLastRotationWasSuccessful(false);
-    setNextPiece(getRandomPiece());
+    
+    // Reset key states
+    keyStatesRef.current = {
+      left: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+      right: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+      down: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+    };
+    
+    const next = getRandomPiece();
+    setNextPiece(next);
     
     const type = getRandomPiece();
     const shape = getShape(type, 0);
-    setCurrentPiece({
+    
+    const initialPiece = {
       type,
       rotation: 0,
       x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-      y: type === 'I' ? -1 : 0,
-    });
-  }, [getShape, initAudio]);
+      y: type === 'I' ? -2 : -1, // Start higher to match new spawn position
+    };
+    setCurrentPiece(initialPiece);
+    currentPieceRef.current = initialPiece;
+    lastGravityRef.current = performance.now();
+  }, [getShape]);
 
   // Drop timer
   useEffect(() => {
     if (isPlaying && !gameOver && !isPaused) {
       const speed = Math.max(100, 1000 - (level - 1) * 100);
-      gameLoopRef.current = setInterval(tick, speed);
+      gameLoopRef.current = window.setInterval(tick, speed);
       return () => {
-        if (gameLoopRef.current) clearInterval(gameLoopRef.current);
+        if (gameLoopRef.current) window.clearInterval(gameLoopRef.current);
       };
     }
   }, [isPlaying, gameOver, isPaused, level, tick]);
@@ -590,39 +695,116 @@ export default function Rhythmia() {
   }, [isPlaying, gameOver]);
 
   useEffect(() => {
+    if (!isPlaying || gameOver) return;
+    const gameLoop = (currentTime: number) => {
+      if (!isPausedRef.current && !gameOverRef.current) {
+        // Process DAS/ARR for horizontal movement
+        // Priority: most recently pressed direction wins (handled by canceling opposite on press)
+        processHorizontalDasArr('left', currentTime);
+        processHorizontalDasArr('right', currentTime);
+        
+        // Process soft drop
+        processSoftDrop(currentTime);
+
+        // Gravity
+        const speed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
+        if (currentTime - lastGravityRef.current >= speed) {
+          tick();
+          lastGravityRef.current = currentTime;
+        }
+      }
+
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    lastGravityRef.current = performance.now();
+    gameLoopRef.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+    };
+  }, [isPlaying, gameOver, tick, processHorizontalDasArr, processSoftDrop]);
+
+  // Key handlers with proper DAS/ARR initialization
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isPlaying) return;
+      if (!isPlaying || gameOver) return;
+      if (e.repeat) return; // Ignore OS key repeat - we handle our own
       
+      const currentTime = performance.now();
+
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault();
-          movePiece(-1, 0);
+          if (!keyStatesRef.current.left.pressed) {
+            // Cancel opposite direction (directional priority)
+            keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+            
+            keyStatesRef.current.left = {
+              pressed: true,
+              dasCharged: false,
+              lastMoveTime: currentTime,
+              pressTime: currentTime,
+            };
+            // Immediate first move on press
+            if (!isPaused) movePiece(-1, 0);
+          }
           break;
+          
         case 'ArrowRight':
           e.preventDefault();
-          movePiece(1, 0);
+          if (!keyStatesRef.current.right.pressed) {
+            // Cancel opposite direction (directional priority)
+            keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+            
+            keyStatesRef.current.right = {
+              pressed: true,
+              dasCharged: false,
+              lastMoveTime: currentTime,
+              pressTime: currentTime,
+            };
+            // Immediate first move on press
+            if (!isPaused) movePiece(1, 0);
+          }
           break;
+          
         case 'ArrowDown':
           e.preventDefault();
-          movePiece(0, 1);
-          setScore(prev => prev + 1);
+          if (!keyStatesRef.current.down.pressed) {
+            keyStatesRef.current.down = {
+              pressed: true,
+              dasCharged: false,
+              lastMoveTime: currentTime,
+              pressTime: currentTime,
+            };
+            // Immediate first move on press
+            if (!isPaused && movePiece(0, 1)) {
+              setScore(prev => prev + 1);
+            }
+          }
           break;
+          
         case 'ArrowUp':
         case 'x':
         case 'X':
           e.preventDefault();
-          rotatePiece(1); // Clockwise
+          if (!isPaused) rotatePiece(1);
           break;
+          
         case 'z':
         case 'Z':
         case 'Control':
           e.preventDefault();
-          rotatePiece(-1); // Counter-clockwise
+          if (!isPaused) rotatePiece(-1);
           break;
+          
         case ' ':
           e.preventDefault();
-          hardDrop();
+          if (!isPaused) hardDrop();
           break;
+          
         case 'p':
         case 'P':
         case 'Escape':
@@ -632,29 +814,35 @@ export default function Rhythmia() {
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowLeft':
+          keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+          break;
+        case 'ArrowRight':
+          keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+          break;
+        case 'ArrowDown':
+          keyStatesRef.current.down = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+          break;
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [movePiece, rotatePiece, hardDrop, isPlaying]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isPlaying, isPaused, gameOver, movePiece, rotatePiece, hardDrop]);
 
   const renderBoard = () => {
     const displayBoard = board.map(row => [...row]);
     
-    // Add current piece to display
     if (currentPiece) {
       const shape = getShape(currentPiece.type, currentPiece.rotation);
-      for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-          if (shape[y][x]) {
-            const boardY = currentPiece.y + y;
-            const boardX = currentPiece.x + x;
-            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
-              displayBoard[boardY][boardX] = currentPiece.type;
-            }
-          }
-        }
-      }
       
-      // Add ghost piece
+      // Add ghost piece first
       let ghostY = currentPiece.y;
       while (isValidPosition({ ...currentPiece, y: ghostY + 1 }, board)) {
         ghostY++;
@@ -665,9 +853,24 @@ export default function Rhythmia() {
             if (shape[y][x]) {
               const boardY = ghostY + y;
               const boardX = currentPiece.x + x;
-              if (boardY >= 0 && boardY < BOARD_HEIGHT && displayBoard[boardY][boardX] === null) {
-                displayBoard[boardY][boardX] = `ghost-${currentPiece.type}`;
+              if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                if (displayBoard[boardY][boardX] === null) {
+                  displayBoard[boardY][boardX] = `ghost-${currentPiece.type}`;
+                }
               }
+            }
+          }
+        }
+      }
+
+      // Add current piece on top
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (shape[y][x]) {
+            const boardY = currentPiece.y + y;
+            const boardX = currentPiece.x + x;
+            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+              displayBoard[boardY][boardX] = currentPiece.type;
             }
           }
         }
